@@ -1,753 +1,920 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>演算法筆記本：演算法的秘密</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
-<style>
-/* Layout: a phone feed on the left, the algorithm's graph-paper notebook on the right; stacks on phones. */
-:root{
-  --bg:#E9EDF2; --paper:#FFFFFF; --ink:#17202B; --muted:#5A6576; --line:#D2D9E2;
-  --accent:#3F33C9; --accent-ink:#FFFFFF; --rec:#E0362C; --redact:#17202B; --ok:#1F8A5B;
-  --ph-body:#0A0C11; --ph-screen:#11151D; --ph-fg:#EEF1F6; --ph-muted:#8C96A6; --ph-line:#262D3A; --ph-toast:#2A3140; --ph-like:#E6406E;
-  --f-display:"Times New Roman", DFKai-SB, BiauKai, "標楷體", serif;
-  --f-body:"Times New Roman", DFKai-SB, BiauKai, "標楷體", serif;
-  --f-mono:"Times New Roman", DFKai-SB, BiauKai, "標楷體", monospace;
-}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0E1218; --paper:#171C25; --ink:#E6EAF1; --muted:#97A2B2; --line:#2A3240;
-  --accent:#8E86FF; --accent-ink:#0E1218; --rec:#FF5A4F; --redact:#C9D0DB; --ok:#4CC38A; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0E1218; --paper:#171C25; --ink:#E6EAF1; --muted:#97A2B2; --line:#2A3240;
-  --accent:#8E86FF; --accent-ink:#0E1218; --rec:#FF5A4F; --redact:#C9D0DB; --ok:#4CC38A; color-scheme:dark}
-
-*{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body);margin:0}
-.page{max-width:1120px;margin:0 auto;padding-block:32px 40px;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
-  display:grid;gap:28px}
-.mast{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px}
-.mast > div{min-width:0;flex:1 1 420px}
-.eyebrow{margin:0;font:500 12px/1.4 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-h1{margin:6px 0 10px;font:800 clamp(34px,6vw,60px)/1.05 var(--f-display);letter-spacing:-.02em;text-wrap:balance}
-html[lang="zh-Hant"] h1{letter-spacing:.02em;font-weight:900}
-.lede{margin:0;max-width:62ch;color:var(--muted);font-size:17px}
-.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--paper);padding:3px;flex:none}
-.lang button{border:0;background:transparent;color:var(--muted);font:600 13px var(--f-body);padding:6px 14px;border-radius:999px;cursor:pointer}
-.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
-.stage{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:32px;align-items:start}
-@media (max-width:860px){.stage{grid-template-columns:minmax(0,1fr)}.phone{max-width:400px;width:100%;margin:0 auto}}
-
-/* Phone: a deliberately dark app screen in both themes */
-.phone{background:var(--ph-body);border-radius:38px;padding:12px;box-shadow:0 18px 40px -18px rgba(10,12,20,.55)}
-.screen{background:var(--ph-screen);color:var(--ph-fg);border-radius:28px;min-height:660px;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.feedbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px 10px;border-bottom:1px solid var(--ph-line);font:500 12px var(--f-mono);color:var(--ph-muted)}
-.feedbar .app{font:800 18px var(--f-display);color:var(--ph-fg);letter-spacing:-.01em}
-.feedbar button{font:500 11px var(--f-mono);color:var(--ph-fg);background:transparent;border:1px solid var(--ph-line);border-radius:999px;padding:4px 10px;cursor:pointer}
-.feedbar button:disabled{opacity:.4;cursor:default}
-.post{display:flex;flex-direction:column;gap:10px;padding:12px 14px 0}
-.post-head{display:flex;align-items:center;gap:8px;font-size:14px}
-.avatar{width:28px;height:28px;border-radius:50%;flex:none;border:2px solid var(--ph-screen);box-shadow:0 0 0 1.5px var(--ph-line)}
-.sugg{margin-left:auto;font:400 11px var(--f-mono);color:var(--ph-muted)}
-.art{position:relative;aspect-ratio:4/5;max-width:100%;border-radius:14px;overflow:hidden;display:flex;align-items:flex-end;padding:18px;background:var(--c);}
-.art-title{font:800 clamp(24px,7vw,32px)/1.12 var(--f-display);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.9);text-wrap:balance;position:relative;z-index:2;}
-.prog{position:absolute;top:10px;left:12px;right:12px;height:3px;border-radius:2px;background:rgba(255,255,255,.28);overflow:hidden}
-.prog i{display:block;height:100%;width:0;background:#fff}
-.prog.run i{animation:fill 5s linear forwards}
-@keyframes fill{to{width:100%}}
-.actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.act{display:inline-flex;align-items:center;gap:6px;background:transparent;color:var(--ph-fg);border:1px solid var(--ph-line);border-radius:999px;padding:7px 12px;font:500 13px var(--f-body);cursor:pointer}
-.act svg{width:18px;height:18px}
-.act[aria-pressed="true"]{background:var(--ph-like);border-color:var(--ph-like);color:#fff}
-.act.ni{margin-left:auto;border-style:dashed}
-.likes{margin:0;font:600 13px var(--f-body)}
-.cap{margin:0;font-size:13px;color:var(--ph-muted)}
-.cap b{color:var(--ph-fg)}
-.next{margin:auto 14px 14px;background:var(--ph-fg);color:var(--ph-screen);border:0;border-radius:14px;padding:13px;font:600 15px var(--f-body);cursor:pointer}
-.ph-msg{flex:1;display:flex;flex-direction:column;gap:14px;padding:26px 22px 22px}
-.ph-msg h2{margin:0;font:800 30px/1.15 var(--f-display);text-wrap:balance}
-.ph-msg p{margin:0;color:var(--ph-muted);font-size:15px}
-.ph-msg p b{color:var(--ph-fg)}
-.ph-msg ul{margin:0;padding-left:18px;color:var(--ph-muted);font-size:14px;display:grid;gap:6px}
-.ph-msg ul b{color:var(--ph-fg)}
-.ph-btns{margin-top:auto;display:grid;gap:10px}
-.btn{border:0;border-radius:14px;padding:13px 14px;font:600 15px var(--f-body);cursor:pointer;background:var(--ph-fg);color:var(--ph-screen)}
-.btn.ghost{background:transparent;color:var(--ph-fg);border:1px solid var(--ph-line)}
-.toast{position:absolute;left:14px;right:14px;bottom:76px;background:var(--ph-toast);color:var(--ph-fg);font-size:13px;padding:10px 12px;border-radius:10px}
-.kbd{font:400 12px var(--f-mono);color:var(--ph-muted)}
-
-/* Notebook */
-.notebook{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:24px clamp(16px,3vw,32px) 28px;min-width:0;
-  background-image:linear-gradient(color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px);
-  background-size:22px 22px;display:grid;gap:22px}
-.nb-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
-.nb-head h2{margin:0;font:800 26px/1.15 var(--f-display);letter-spacing:-.01em}
-.tag{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);background:var(--paper);padding:3px 8px;border-radius:4px}
-.rec{display:inline-flex;align-items:center;gap:6px;color:var(--rec);border-color:color-mix(in srgb,var(--rec) 40%,var(--line))}
-.rec::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--rec);animation:blink 1.4s infinite}
-@keyframes blink{50%{opacity:.25}}
-.nb p{margin:0}
-.sub{margin:0 0 10px;font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.big{font:800 56px/1 var(--f-display);font-variant-numeric:tabular-nums}
-.sigrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.redact{display:grid;gap:8px}
-.redact div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center}
-.redact span{height:12px;background:var(--redact);border-radius:2px}
-.redact i{height:12px;background:var(--redact);opacity:.85;border-radius:2px;transition:width .5s ease}
-.verdict{font:600 clamp(20px,2.6vw,26px)/1.35 var(--f-body);text-wrap:balance}
-.verdict b{font-family:var(--f-display);font-weight:800}
-.strip{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px}
-.strip.r2{grid-template-columns:repeat(20,minmax(0,1fr))}
-.strip span{aspect-ratio:1/2;border-radius:2px;max-width:100%}
-.strip span.ni{outline:2px solid var(--ink);outline-offset:-2px;opacity:.45}
-.strip-labels{display:flex;justify-content:space-between;gap:8px;font:400 12px var(--f-mono);color:var(--muted);margin-top:6px}
-.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
-.compare div{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:10px 12px}
-.compare b{display:block;font:800 22px var(--f-display);font-variant-numeric:tabular-nums}
-.compare small{color:var(--muted);font-size:13px}
-.bars{display:grid;gap:7px}
-.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13px}
-.bar .track{height:12px;background:color-mix(in srgb,var(--line) 70%,transparent);border-radius:2px;overflow:hidden}
-.bar .track i{display:block;height:100%;border-radius:2px;transition:width .5s ease}
-.bar .pct{font:500 12px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
-.log{margin:0;padding:0;list-style:none;display:grid;gap:6px;font:400 13px/1.45 var(--f-mono)}
-.log li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding-bottom:6px}
-.log li span:first-child{min-width:0}
-.log li span:last-child{white-space:nowrap;font-weight:500}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
-.legend span{display:inline-flex;align-items:center;gap:6px}
-.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
-.note{border-left:3px solid var(--accent);padding:4px 0 4px 14px;color:var(--ink)}
-.note p+p{margin-top:8px}
-.goal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.goal div{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:12px}
-.goal b{font:800 30px var(--f-display);font-variant-numeric:tabular-nums}
-.goal small{color:var(--muted)}
-.goal .ok{color:var(--ok)}.goal .no{color:var(--rec)}
-.discuss{border-top:2px solid var(--ink);padding-top:16px}
-.discuss ol{margin:0;padding-left:22px;display:grid;gap:8px}
-.nb-btns{display:flex;flex-wrap:wrap;gap:10px}
-.nb-btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:10px 16px;font:600 14px var(--f-body);cursor:pointer}
-.nb-btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
-footer{font-size:13px;color:var(--muted);max-width:75ch}
-button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-@media (max-width:480px){.bar{grid-template-columns:90px minmax(0,1fr) 40px}.redact div{grid-template-columns:80px minmax(0,1fr)}.compare,.goal{grid-template-columns:minmax(0,1fr)}}
-@media (prefers-reduced-motion:reduce){.prog.run i{animation:none;width:100%}.rec::before{animation:none}.bar .track i,.redact i{transition:none}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IG瀏覽紀錄分析 | IG Footprint Analytics | Phân tích Dấu chân IG</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- JSZip CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .ig-gradient {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+        .ig-text-gradient {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 </head>
-<body>
-<div class="page">
-  <header class="mast">
-    <div>
-      <p class="eyebrow" id="eyebrow"></p>
-      <h1 id="h1"></h1>
-      <p class="lede" id="lede"></p>
-    </div>
-    <div class="lang" role="group" aria-label="Language / 語言">
-      <button type="button" id="lang-en" data-l="en">EN</button>
-      <button type="button" id="lang-zh" data-l="zh">中文</button>
-    </div>
-  </header>
-  <main class="stage" id="stage">
-    <section class="phone" id="phone-container" aria-label="Feed"><div class="screen" id="screen"></div></section>
-    <aside class="notebook nb" id="notebook" aria-live="polite"></aside>
-  </main>
-  <footer id="foot"></footer>
-</div>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
 
-<script>
-/* ---------- Content ---------- */
-const CATS={
-  look:{color:"#D9468F",comp:true,en:["Appearance & filters","Appearance"],zh:["外貌與濾鏡","外貌"]},
-  body:{color:"#E07A2E",comp:true,en:["Fitness & diet culture","Diet culture"],zh:["健身與飲食文化","飲食文化"]},
-  life:{color:"#C49517",comp:true,en:["lifestyle","Lifestyle"],zh:["生活風格","生活風格"]},
-  friends:{color:"#2F8F6B",comp:false,en:["Friends & family","Friends"],zh:["朋友與家人","朋友"]},
-  hobby:{color:"#3A72C4",comp:false,en:["Hobbies & skills","Hobbies"],zh:["興趣與技能","興趣"]},
-  animals:{color:"#7A5BC7",comp:false,en:["Animals","Animals"],zh:["動物","動物"]}
-};
-const KEYS=Object.keys(CATS);
-const BOOST={look:.5,body:.4,life:.4,friends:0,hobby:0,animals:0};
-const STUCK={look:6,body:6.5,life:3,friends:0,hobby:0,animals:0};
-const POSTS = {
-  look: [
-    ["mei.glow", 38211, "Golden-ratio outfits for petite 155cm girls 👠｜High-waisted trousers that make you look 170cm", "Master the 3:7 'short top, long bottom' rule and add 10cm to your legs instantly!", "155cm 小隻女的黃金比例穿搭 👠｜視覺秒變 170cm 的高腰神褲提案", "掌握『上短下長』3:7 黃金法則，腿長瞬間拉長 10 公分！", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"],
-    ["yuting_", 21540, "Korean minimalist OOTD 🧥✨｜Get the K-drama heroine's classy look", "Look high-end without spending much! A layering formula in muted earth tones.", "韓系極簡風 OOTD 韓劇女主同款質感搭配 🧥✨", "不用花大錢也能穿出高級感！低飽和度大地色系的疊穿公式。", "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600"],
-    ["kai.fits", 17402, "Outfit guide for yellow or darker skin tones 🎨｜Colors that brighten vs. dull your skin, tested", "Stop wearing the wrong colors! The right shades brighten your skin by two tones.", "黃黑皮穿搭避坑指南 🎨｜顯白 vs 顯髒的色彩對比實測", "別再穿錯顏色了！選對穿搭色彩，膚色立刻提亮兩個色階。", "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600"],
-    ["soft.daily", 26930, "Complete guide to retro Y2K style 💖｜Back to the 2000s 'hot girl' formula", "Low-rise jeans + a cropped top: the must-have millennium look!", "復古 Y2K 穿搭全攻略 💖｜秒回 2000 年的辣妹公式", "低腰褲 + 短版上衣，打造辣妹必備的千禧年潮流風格！", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600"],
-    ["hsin__", 14388, "Lifesaver for pear-shaped, big-boned bodies 👗｜5 outfit secrets to hide fat and look slimmer", "Wide hips and a big belly? This A-line skirt and wide-leg pants hide every 'flaw'!", "大骨架梨形身材救星 👗｜遮肉顯瘦 5 個穿搭密碼", "跨寬腹大怎麼辦？這款 A 字裙跟寬褲完美遮蓋所有身形缺點！", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600"],
-    ["beautylab.tw", 31277, "Classy 'old money' style 🏛️｜The ultimate in understated luxury", "No big logos, just quality and cut! Learn to dress with an air of wealth.", "高級感老錢風 Old Money Style 🏛️｜低調奢華的極致穿搭", "沒有大 Logo，全靠質感與剪裁勝出！教你穿出貴氣感。", "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600"],
-    ["ivy.ootd", 19055, "Budget capsule wardrobe for students 👚｜10 pieces, 30 different outfits", "Save money and still look new every day! The high-value outfit-repeating trick every budget shopper needs.", "學生黨平價膠囊衣櫥 👚｜10 件單品搭出 30 套不重樣提案", "省錢又能天天煥然一新！小資族必學的高 CP 值重複穿搭術。", "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600"],
-    ["lumi.edit", 42716, "American retro outfits for curvy girls 🇺🇸｜Curvy bodies can be super hot too!", "Confidence is the best outfit! Ditch the black cover-ups and show off your curves.", "微胖女孩的美式復古穿搭 🇺🇸｜肉肉身材也能超級辣！", "自信就是最好的穿搭！告別黑色遮肉，大方展示你的性感曲線。", "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600"],
-    ["fit.chen", 24310, "Must-have early-autumn layering 🍂｜The secret to making basic pieces look twice as good", "Shirt + knit vest: an easy, layered preppy look.", "早秋必備多層次疊穿 🍂｜讓普通單品質感翻倍的秘訣", "襯衫 + 針織馬甲，輕鬆打造層次感爆棚的學院風 Look。", "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?w=600"],
-    ["cleaneats.jo", 33102, "Quiet Luxury outfits ☕｜Everyday work looks for the polished girl", "Elegance never goes out of style. Modern beauty through simple lines and quality fabrics.", "靜奢風 Quiet Luxury 穿搭 ☕｜精緻女孩的日常出勤提案", "優雅永不過時。用簡約的線條與質感面料演繹現代美學。", "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=600"],
-    ["gymrat.lee", 15877, "Cool summer capsule outfits 👙｜Must-have beach looks for vacation photos", "A romantic sun-protection shirt with a flowing maxi skirt: dreamy photos in the sea breeze!", "清涼夏日膠囊穿搭 👙｜渡假風海邊拍照必備 Look", "浪漫防曬衫配飄逸長裙，在海風中拍出夢幻人生大片！", "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600"],
-    ["run.ann", 20441, "Clean Fit outfits for guys 👕｜A fresh, slightly loose trendy style", "No more greasy look! A simple white tee and wide-leg pants that girls will love.", "帥氣 Clean Fit 男生穿搭 👕｜乾淨清爽的微鬆潮流風格", "告別油膩！簡單白 T 加寬褲，穿出讓女生好感度爆棚的風格。", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600"],
-    ["shred.club", 27519, "French romantic retro style 🌹｜An elegant symphony of floral skirts and Mary Janes", "Like strolling the streets of Paris: effortlessly casual, lazily romantic.", "法式浪漫復古風 🌹｜碎花裙與瑪麗珍鞋的優雅交響曲", "如同漫步巴黎街頭，帶著一點隨性與慵懶的極致浪漫。", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"],
-    ["tia.moves", 22903, "Japanese workwear 'Cityboy' style 🎒｜Layered outdoor mountain looks", "Functional and fashionable! A trendy look for weekend outdoor trips and city walks.", "日系工裝 Cityboy 穿搭 🎒｜山系戶外風的疊穿層次感", "兼具機能與時尚！適合週末戶外探索與城市漫遊的潮流提案。", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600"],
-    ["macro.max", 29760, "Sweet-and-cool Balletcore 🩰｜The rebellious beauty of tutus and lace-up shoes", "Soft with a cool edge! A guide to this year's hottest girlish style.", "甜酷芭蕾風 Balletcore 🩰｜蓬蓬裙與綁帶鞋的叛逆美學", "溫柔又帶點酷勁！今年最爆火的少女感穿搭風格指南。", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600"],
-    ["lean.season", 18624, "Commuter outfits for new employees 💼｜Look sharp and youthful, not old-fashioned", "Blazers can be stylish too! Appropriate looks for a young woman's first day at work.", "職場新人通勤穿搭 💼｜告別老氣，穿出幹練又不失青春的氣場", "西裝外套也能穿得很時髦！小資女第一天上班的得體提案。", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600"],
-    ["jetset.ray", 25118, "Genderless Boyish style 🧢｜A relaxed, androgynous look", "Break gender boundaries! A casual cool style with oversized hoodies and caps.", "無性別 Boyish 穿搭 🧢｜寬鬆自在的中性美學範本", "打破性別界線！Oversize 衛衣與鴨舌帽的隨性帥氣風格。", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600"],
-    ["rich.tea", 19902, "Dopamine dressing in bold colors 🌈｜Cure your sadness with bright colors", "Say goodbye to dull black, white and gray! Wear bright pieces and let your mood shine.", "多巴胺高飽和度色彩穿搭 🌈｜用繽紛色彩治癒你的不快樂", "告別沉悶黑白灰！穿上亮色系單品，讓心情跟著閃耀起來。", "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600"],
-    ["villa.vibes", 30455, "Autumn/winter American preppy style 🎓｜The classic clash of plaid and leather", "A retro plaid pleated skirt with a cropped leather jacket: youthful campus energy!", "秋冬美式復古學院風 Preppy Style 🎓｜格紋與皮衣的經典碰撞", "復古格紋百褶裙配短版皮衣，穿出青春洋溢的校園神采！", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"],
-    ["sneaker.vault", 16210, "Minimal Monochromatic Look 🖤｜How to style head-to-toe in one color", "All-black or all-white layering! Mix fabric textures for a cool, high-end vibe.", "極簡冷淡風 Monochromatic Look 🖤｜全身同色系的質感穿搭術", "全黑或全白層次搭！用不同面料質感的碰撞穿出高級冷酷感。", "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=600"],
-    ["cafe.hop", 12730, "Sweet American 'sweetheart' look 🍭｜Knit vests and denim mini skirts", "Sweet, lively and a little playful! A style that stands out at parties and on dates.", "甜妹必備美式甜心 Look 🍭｜針織小背心與牛仔短裙提案", "甜美活潑又帶點俏皮！聚會與約會絕對搶眼的甜妹風格。", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"],
-    ["luxe.lin", 23384, "Thai-inspired affordable luxury 🌴｜Bright resort wear with delicate jewelry", "Colorful vacation looks made for tropical sunshine, with a refined Southeast Asian feel.", "泰式輕奢穿搭提案 🌴｜高飽和渡假風與精緻飾品的完美組合", "適合熱帶陽光的繽紛渡假提案，穿出南洋風情的精緻度。", "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600"],
-    ["firstclass.k", 14966, "Embroidered Hanfu, Chinese traditional style 🏮｜A romantic meeting of tradition and modern beauty", "The elegant lines of a cloud collar and mamian skirt: an ancient, ethereal look rich in culture.", "重工刺繡國風漢服穿搭 🏮｜傳統文化與現代美學的浪漫碰撞", "雲肩與馬面裙的優雅線條，穿出古風仙氣與文化底蘊。", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"],
-    ["dream.desk", 21047, "Effortless Athflow style 👟｜The comfort philosophy of mixing sportswear and formalwear", "Sweatpants with a coat! A city look that's comfy like loungewear but stylish enough to go out.", "極致隨性 Athflow 穿搭 👟｜運動風與正裝混搭的舒適哲學", "棉褲搭大衣！兼具居家舒適與出門時尚感的都市穿搭提案。", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600"],
-    ["tea.spill.hs", 41203, "Edgy metal Punk Look ⚡｜A rebellious statement in leather and chains", "Don't follow the crowd! Metal belt buckles and ripped jeans show a fearless personality.", "個性金屬朋克風 Punk Look ⚡｜皮革與金屬鏈條的叛逆宣言", "不隨波逐流！金屬皮帶扣與破洞牛仔褲展現無畏個性。", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600"],
-    ["anon.confess", 35874, "Korean romantic date outfits in cranberry red 🍒｜An elegant look that wins hearts at first sight", "Brightening and gentle! A cranberry-red knit dress for a romantic date.", "韓系浪漫約會穿搭 蔓越莓紅穿搭提案 🍒｜讓人一眼心動的優雅姿態", "顯白又溫柔！蔓越莓紅針織裙穿出浪漫約會的滿滿儀式感。", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"],
-    ["screenshot.q", 28432, "Layering high-end metal accessories 💍｜3 tips to instantly upgrade a basic outfit", "Match the metals of your rings and necklaces! Small accessories give your look a refined soul.", "高級感金屬配件疊搭 💍｜3 個技巧讓普通穿搭秒變高級", "戒指與項鍊的材質呼應！小配件打造整體穿搭的精緻靈魂。", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"],
-    ["the.real.tea", 33019, "Smart 'Geek chic' style 👓｜The intellectual look of glasses and dress shirts", "Metal-frame glasses with a crisp shirt: sharp, smart and classy.", "高智感知識分子風 Geekchic 👓｜眼鏡與正裝襯衫的知性美感", "金屬框眼鏡搭配板正襯衫，穿出俐落、睿智與高級質感。", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600"],
-    ["hot.take.daily", 22675, "Camping-inspired Gorpcore ⛺｜The practical beauty of windbreakers and fleece", "No more bulky look! Functional windbreakers that look cool in the city and outdoors.", "露營機能風 Gorpcore ⛺｜防風外套與抓絨衣的實用美學", "告別臃腫！機能性防風外套穿出都市戶外兼具的帥氣美學。", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600"],
-    ["expose.page", 30981, "Dreamy Bohemian style 🌸｜A free spirit in fringe and ethnic prints", "Romantic fringe and flowing prints that sway in the wind: a free, untamed vibe.", "夢幻浪漫波西米亞風 🌸｜流蘇與民族風印花的自由靈魂", "浪漫流蘇與飄逸印花，隨風擺動穿出追求自由的不羈氣息。", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"]
-  ],
-  body: [
-    ["who.said", 18440, "30-day glow-up plan! From 55kg to 45kg with straight legs + abs 💪🔥", "Say no to 'fake wide hips'! Just 15 minutes a day, and K-pop idol legs are yours this summer!", "30天變美計畫！從 55kg 到 45kg 的直腿 + 腹肌養成術 💪🔥", "拒絕假胯寬！每天堅持 15 分鐘，這個夏天的女團腿屬於你！", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
-    ["ratio.king", 26508, "Do you have 'fake wide hips' and rounded shoulders? 4 moves to fix your posture and look 5kg lighter!", "Posture decides your vibe! Fix your 'tech neck' and hips and look 10× better in clothes!", "你也有『假胯寬』跟『圓肩駝背』嗎？4 個動作矯正體態顯瘦 5 公斤！", "體態決定氣質！告別猥瑣頸與假胯寬，穿衣服好看 10 倍！", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["class207", 412, "I tried an apple-only diet for a week 🍎｜Lost 4kg straight away!", "An extreme fast for next week's awards ceremony / date! A real record of my body changes.", "挑戰一週只吃蘋果減肥法 🍎｜體重直接掉 4 公斤！", "為了下週的頒獎典禮/約會，進行極限輕斷食！真實紀錄身材變化。", "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600"],
-    ["debate.team", 887, "This is the ideal male body! Training for 10% body fat, steel pecs and a six-pack 🏋️‍♂️", "Real men push themselves hard! Ditch the 'pretty boy' look and build a V-shaped body full of testosterone.", "這才是男神的標準身材！體脂率 10% 鋼鐵胸肌與八塊腹肌訓練 🏋️‍♂️", "男人就該對自己狠一點！告別小白臉，打造荷爾蒙爆棚的倒三角形體。", "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600"],
-    ["grandma.sun", 1543, "Get an anime-style tiny waist 💃｜10 minutes a day of core training to lose the 'muffin top'", "A must for summer outfits! Super-slimming waist training to get rid of side fat.", "打造少女感漫畫腰 💃｜每天 10 分鐘腰腹訓練，擺脫游泳圈", "夏日穿搭必備！超顯瘦水蛇腰訓練，擺脫側腰贅肉。", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
-    ["alex.wu", 236, "How to get perfect 'right-angle' shoulders? Lose the big trapezius and look great in a camisole 👙", "Big traps make your neck look short and you look heavier! 3 stretches for model-style square shoulders.", "如何擁有迷人直角肩？擺脫斜方肌大，穿吊帶背心超好看 👙", "斜方肌顯脖子短又顯胖！3 個伸展動作練出名模同款直角肩。", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["hoops.hs", 519, "Say goodbye to calf muscles! Effective stretches for slim, straight, long legs 🦵", "Muscular legs? Stretch for 10 minutes before bed every night to soften your calves!", "告別小腿肌！超有效瘦小腿拉筋術，告別蘿蔔腿 腿型直又長 🦵", "肌肉腿怎麼辦？每天睡前拉筋 10 分鐘，軟化小腿肌肉！", "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600"],
-    ["jo.lin", 764, "Goodbye dark circles and eye bags 🐼｜3 moves to smooth tired-looking eyes", "Always look tired? Learn to get rid of stubborn dark circles and bring back bright eyes.", "告別黑眼圈與眼袋 🐼｜3 個動作撫平眼周疲態", "看起來總是很累？教你消除頑固黑眼圈，還原神采奕奕的眼神。", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["photo.club", 301, "Fix your double chin! The 'tongue exercise' for a tighter jawline 👅", "No jawline from the side? Tighten it in 3 minutes a day!", "拯救雙下巴！徒手緊緻下巴線條的『舌頭運動』👅", "側面看沒有下巴線條？每天 3 分鐘緊緻下顎線！", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
-    ["bff.pei", 1102, "How to get rid of underarm fat and flabby arms? Wear sleeveless tops stress-free 👕", "Awkward bulges in a tank top? A stretching guide to lose 'bye-bye arm' fat.", "如何告別副乳與手臂肉？夏日無袖穿搭無壓力 👕", "穿背心擠出兩塊肉超尷尬？消除手臂掰掰肉的伸展指南。", "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600"],
-    ["guitar.day12", 933, "No-equipment home HIIT fat burn 💦｜15 minutes of full-body sweat", "No time for the gym? Follow along for an efficient 15-minute fat burn!", "居家零器材高效燃脂 HIIT 💦｜15 分鐘全身爆汗汗水發光", "沒時間去健身房？跟著我一起做，15 分鐘達到高效燃脂效果！", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
-    ["sketch.min", 1407, "Build a full 'peach' butt 🍑｜3 no-weight glute activation moves at home", "No more flat butt! Get round, firm glutes at home without a gym.", "打造飽滿蜜桃臀 🍑｜3 個居家無負重臀部激活動作", "拒絕扁平臀！不用去健身房，在家也能練出圓潤緊緻的臀部線條。", "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600"],
-    ["code.kid", 688, "Beginner Pilates 🧘‍♀️｜Core training to sculpt long, lean muscles", "No bulky muscles! A gentle yet powerful full-body workout for a model's figure.", "新手普拉提 Pilates 入門 🧘‍♀️｜雕塑修長肌肉線條的核心訓練", "不長粗肌肉！溫柔又有力量的全身雕塑運動，養出名模體態。", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["baker.yu", 1219, "10-minute full-body stretch before bed 🌙｜Relax tight muscles for a long, lean look", "Ease the day's fatigue and tension, lengthen your muscles, and sleep soundly.", "10分鐘睡前全身拉筋伸展 🌙｜放鬆緊繃肌肉，打造修長體態", "舒緩一整天的疲勞與緊繃，伸展肌肉線條，睡個香甜好覺。", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
-    ["photo.walk", 2860, "Fix anterior pelvic tilt! 3 rehab-level moves for a protruding belly 🧘‍♂️", "Slim but still have a little belly? You may not be fat; your pelvis may be tilted!", "告別骨盆前傾！3 個復健級動作拯救小腹凸出 🧘‍♂️", "明明很瘦卻有小肚子？你可能不是胖，而是骨盆前傾了！", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["plant.parent", 1734, "Men's big arm workout 💪｜Build veiny biceps and triceps", "Show your strength! Build arms that burst out of your sleeves.", "男性手臂大肌群爆破訓練 💪｜練出二頭肌與三頭肌爆筋線條", "展現男性力量感！打造撐爆袖口的爆筋手臂。", "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600"],
-    ["lego.lab", 3092, "Get beautiful collarbones and a swan neck 🦢｜A posture class to fix rounded shoulders and back fat", "Posture defines beauty! 10 minutes a day for an elegant swan neck.", "打造迷人鎖骨與美麗天鵝頸 🦢｜擺脫圓肩後背肉的儀態課", "儀態決定美麗！每天 10 分鐘，練出高貴典雅的天鵝頸。", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["chess.tw", 574, "Goodbye 'fake wide hips'! 14-day leg-shape challenge 🦵｜Improve X- and O-shaped legs", "How you walk shapes your legs! Hip stability training for straight legs.", "告別假胯寬！腿型矯正 14 天挑戰 🦵｜改善 X 型腿與 O 型腿", "走路姿勢決定腿型！透過髖關節穩定訓練，重塑筆直雙腿。", "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600"],
-    ["shiba.mochi", 5481, "Is low body fat really healthy? 🩸｜The truth about lost periods that fitness influencers won't tell you", "The cost of chasing extreme low body fat! Revealing the hormone problems it causes.", "低體脂率真的健康嗎？ 🩸｜健身網紅沒告訴你的生理期停滯真相", "盲目追求極致體脂的代價！揭開低體脂帶來的內分泌失調問題。", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
-    ["campus.cat", 3920, "A pain-free fat-loss guide for bigger bodies 🏃‍♂️｜Knee-friendly, effective cardio", "Protect your knees! Super-slow jogging and water exercise designed for heavier people.", "大體重無痛減脂指南 🏃‍♂️｜不傷膝蓋的高效有氧運動推薦", "保護膝關節！專為基數較大者設計的超慢跑與水水運動提案。", "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600"],
-    ["otter.daily", 6702, "Sculpting your back muscles 🦋｜Goodbye bra lines and thick back fat", "Get beautiful 'butterfly' arms and a girlish back! Make backless outfits a joy to wear.", "背部線條肌群雕塑 🦋｜告別內衣痕與厚重後背肉", "打造迷人蝴蝶袖與少女背！讓穿後露背裝成為一種享受。", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["duckling.cam", 4318, "Beginner's guide to weighted squats 🏋️‍♀️｜Use your glutes and protect your knees", "Find the right muscles to push with! Make the squat your ultimate move for building muscle.", "新手重量訓練深蹲攻略 🏋️‍♀️｜教你用臀部發力不傷膝蓋", "掌握正確發力點！讓深蹲成為你全身肌肉量提升的神級動作。", "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600"],
-    ["goat.opinions", 2655, "Street Workout 🤸‍♂️｜The human flag and extreme pull-up bar challenges", "Defy gravity with your own body weight! Show off total core control and explosive power.", "徒手街頭健身 Street Workout 🤸‍♂️｜人體旗幟與單槓極限挑戰", "用自身體重征服重力！展現極致的核心控制力與爆發力。", "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600"],
-    ["parrot.pal", 3187, "Incline treadmill walking 🏃‍♀️｜A knee-friendly, fat-burning walk", "Incline 12, speed 4.5! Get your heart rate up and sweat all over in 15 minutes.", "跑步機坡度健走法 🏃‍♀️｜不傷膝蓋又超燃脂的走跑提案", "設置坡度 12，速度 4.5！15 分鐘輕鬆讓你心率飆升、全身爆汗。", "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600"],
-    ["kitten.zoom", 4876, "Fix flat feet and fallen arches 👣｜Relax your plantar fascia and activate arch strength", "Feet get sore when you walk? Restore healthy, springy arches by rolling a ball and gripping with your toes.", "拯救扁平足與足弓踏平 👣｜足底筋膜放鬆與足弓力量激活", "走路容易腳酸？透過小球滾動與抓趾訓練恢復足弓健康彈性。", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["rescue.dogs", 7713, "5-minute daily abs challenge 🍫｜Quickly tighten your lower belly", "Stick with it for a week and see the change! Get a flat, toned stomach.", "每天 5 分鐘腹肌馬甲線挑戰 🍫｜快速收緊下腹部線條", "堅持一週就能看到變化！打造平坦有線條的小腹。", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
-    ["meme.hs", 4402, "How to measure body fat correctly? 📏｜Don't be fooled by the number on the scale!", "Same weight but smaller measurements? Learn to read a body composition report (InBody).", "如何正確測量體脂率？ 📏｜別被體重計上的數字欺騙了！", "體重沒變但圍度小了? 教你看懂身體組成分析表 (InBody)。", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"],
-    ["lol.daily", 3815, "A guide to training during your period 🩸｜Exercise that follows your cycle", "Can you exercise during your period? Train by cycle phase and get twice the results!", "女性健身經期訓練指南 🩸｜順應生理週期的高效運動提案", "月經期能不能運動？掌握分期訓練法，讓運動事半功倍！", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
-    ["skit.bros", 5209, "Build a V-shaped body 📐｜Training for wider shoulders and back for men", "Lats and lateral raises! The key training to fill out a suit with presence.", "打造倒三角形 V-Shape 體態 📐｜男性肩背寬度比例訓練", "闊背肌與三角肌側平舉！穿西裝撐起氣場的關鍵訓練。", "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600"],
-    ["dadjoke.tw", 1928, "Recovering from post-workout soreness (DOMS) 🧊｜Foam rolling and hot-cold baths", "Soreness doesn't mean it worked! 3 ways to speed muscle repair and ease delayed soreness.", "運動後的肌肉痠痛 DOMS 恢復指南 🧊｜滾筒放鬆與冷熱水浴", "痠痛不等於有效果！3 個加速肌肉修復與減輕延遲性痠痛的方法。", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"]
-  ],
-  life: [
-    ["cat.memes", 2774, "A college student's daily Vlog: my 24 hours of extreme self-discipline 🌿✨", "Up at 5:30 for a morning run, a homemade keto oat bowl, then 8 hours of focused study in the library", "大學生的日常 Vlog：我的 24 小時極致自律生活 🌿✨", "早上 5:30 起床晨跑，手作生酮燕麥碗，圖書館高效讀書 8 小時", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["sketch.duo", 3561, "Bucket list unlocked! My 30-day solo backpacking trip across Europe at 22 ✈️🌍", "Seeing the world with my own savings and the courage to explore. The sunset at the Eiffel Tower was stunning!", "解鎖人生清單！22歲獨自歐洲 30 天深度自助旅行全紀錄 ✈️🌍", "用自己的積蓄看世界，探索未知的勇氣。巴黎塔下的落日太美了！", "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600"],
-    ["pun.master", 2093, "My minimalist room tour 🏠｜A lighter life after throwing out 80% of my stuff", "Less is more. Say goodbye to material desires and create a focused, efficient space.", "我的極簡主義房間 Tour 🏠｜丟掉 80% 雜物後的清爽人生", "越簡單越富有。告別物質慾望，打造專注高效的極簡空間。", "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600"],
-    ["typo.life", 3340, "Good-looking lunchbox diary 🥗｜A week of healthy fat-loss meals, no repeats", "Cooking for yourself saves money and keeps you healthy, for a glowing look and a great figure!", "高顏值便當日記 🥗｜一週不重樣的健康減脂餐提案", "自己做飯不僅省錢還養生，吃出好氣色與好身材！", "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600"],
-    ["mei.glow", 38211, "Morning Routine ☀️｜5 good habits for a productive day", "10 minutes of meditation + a gratitude journal + warm lemon water for an undisturbed morning", "晨間儀式 Morning Routine ☀️｜開啟高效一天的 5 個好習慣", "冥想 10 分鐘 + 寫感恩日記 + 喝一杯溫檸檬水，打造不被干擾的晨間時光", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["yuting_", 21540, "Unboxing a freshman's dream dorm makeover ✨｜Turning a standard dorm into a cozy nest", "Under NT$3,000 for a Korean 'cream-style' dorm that feels healing every time I come back!", "開箱大一新生夢幻宿舍裝潢 ✨｜把千篇一律的宿舍變成溫馨小窩", "花費不到 3000 元，打造韓系奶油風宿舍，每天回房間都超療癒！", "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600"],
-    ["kai.fits", 17402, "A weekend alone ☕️｜Spending the whole day at an indie bookstore and a stylish café", "Learning to enjoy solitude is an important lesson for adults. A healing weekend talking with yourself.", "週末獨處提案 ☕️｜一個人去獨立書店與質感咖啡廳泡一整天", "學會享受孤獨，是成年人最重要的課題。與自己對話的療癒週末。", "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600"],
-    ["soft.daily", 26930, "Planner unboxing and weekly planning 🗓️｜Managing life with a planner", "Control your time, control your life! List 10 goals you must finish this month.", "手帳開箱與週計畫設定 🗓️｜用手帳管理生活的儀式感", "掌控時間的人才能掌控人生！列出這個月必須完成的 10 個目標。", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["hsin__", 14388, "Satisfying closet organization 🧹｜Turning a messy wardrobe into a boutique display", "Tidying your room tidies your mind. Life after decluttering feels amazing!", "沉浸式收納整理 🧹｜將凌亂的衣櫃變身精品店展櫃", "整理房間就是整理心靈。斷捨離後的生活真的太爽了！", "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600"],
-    ["beautylab.tw", 31277, "A desk setup for maximum focus 💻｜A stylish engineer/student desk tour", "Curved monitor + mechanical keyboard + monitor light bar: the dream workspace upgrade!", "打造專注力爆棚的工作桌 Setup 💻｜質感工程師/學生桌面大公開", "曲面螢幕 + 機械鍵盤 + 螢幕掛燈，夢幻工作環境大升級！", "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600"],
-    ["ivy.ootd", 19055, "Homemade high-fiber brunch 🍳｜Enjoying a slow weekend morning", "Life needs little rituals: avocado smoked-chicken toast with a latte.", "自製質感高纖早午餐 🍳｜享受週末清晨的慢生活", "生活需要儀式感，自己做一份酪梨燻雞吐司配拿鐵。", "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600"],
-    ["lumi.edit", 42716, "24 hours of digital detox 📱🚫｜The real world after turning off phone notifications", "Away from the noise of social media, I could hear my own voice again.", "數位減毒 24 小時紀錄 📱🚫｜關掉手機通知後的真實世界", "遠離社群軟體的干擾，我重新聽見了自己的聲音。", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["fit.chen", 24310, "30 days of zero-waste living ♻️｜My plastic-free shopping guide", "Doing my part for the planet by changing small shopping habits.", "零垃圾生活 30 天實測 ♻️｜我的無塑膠購物指南", "為了地球盡一份心力，從小地方改變我們的消費習慣。", "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600"],
-    ["cleaneats.jo", 33102, "Beginner's guide to pour-over coffee ☕｜A pro-level café at home", "From choosing beans to brewing curves, taste the subtle differences in coffee.", "手沖咖啡入門指南 ☕｜在家打造專業等級的咖啡館", "從豆種選擇到沖煮曲線，品味咖啡風味的細緻差異。", "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600"],
-    ["gymrat.lee", 15877, "My bedtime Night Routine 🕯️｜Say goodbye to insomnia and sleep well", "Dim the lights, light a lavender scent, play white noise, and get your mind and body ready for sleep.", "我的睡前放鬆儀式 Night Routine 🕯️｜告別失眠養出好睡眠", "調暗燈光、點燃薰衣草香氛、聽白噪音，讓身心準備進入夢鄉。", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["run.ann", 20441, "A cozy rainy day at home 🌧️｜An afternoon baking herb cookies and cinnamon rolls", "Heavy rain outside, the smell of fresh cookies inside: this is pure happiness.", "雨天沉浸式居家提案 🌧️｜烘焙香草餅乾與肉桂捲的溫馨午後", "窗外下著大雨，室內飄著剛出爐的烤餅乾香氣，這就是極致幸福。", "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600"],
-    ["shred.club", 27519, "Safety and happiness tips for girls living alone 🔐｜Creating your own healing safe haven", "Living alone can feel safe too! My favorite items and safety tips for living solo.", "獨居女孩的安全與幸福提案 🔐｜打造專屬自己的療癒避風港", "一個人住也可以很有安全感！分享我的獨居生活好物與防範小技巧。", "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600"],
-    ["tia.moves", 22903, "Weekend Vintage Market ⏳｜Discovering the charm of the past", "Hunting for treasure among vintage clothes and old records adds a one-of-a-kind retro romance to life.", "週末逛老物二手市集 Vintage Market ⏳｜挖掘舊時光的獨特魅力", "在古著與舊唱片中尋寶，給生活增添一份復古與不重複的浪漫。", "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600"],
-    ["macro.max", 29760, "Decorating with plants 🪴｜A care guide for bringing the forest into your living room", "The moment sunlight shines through the leaves, every corner of the room fills with green.", "沉浸式植物居家佈置 🪴｜將森林搬進客廳的綠植養護指南", "陽光穿透葉片的瞬間，讓綠意充滿房間的每一個角落。", "https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=600"],
-    ["lean.season", 18624, "Everyday scented candles 🕯️｜Finding your signature scent", "Cedar, white tea and citrus: recording moods and seasons through scent.", "質感香氛蠟燭調香日常 🕯️｜尋找屬於自己的標誌性香氣", "雪松、白茶與柑橘，用香氣紀錄心情與四季的變化。", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["jetset.ray", 25118, "Satisfying laundry and ironing 🧼｜Turning clothing care into an elegant ritual", "Watching wrinkles smooth out in the steam, my mood seems to smooth out too.", "沉浸式洗滌與熨燙衣物 🧼｜把穿著整理成一種優雅儀式", "看著皺褶在蒸氣中平整，心情好像也跟著被撫平了。", "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600"],
-    ["rich.tea", 19902, "The golden 3 hours after work 🌙｜How to make a high-quality self-improvement plan?", "No scrolling, no binge-watching! Use your evenings to learn a new language and read.", "下班後的 3 小時黃金時間 🌙｜如何打造高質感的個人充實計畫？", "不滑手機、不追劇！利用晚間時間學習新語言與閱讀。", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["villa.vibes", 30455, "Seasonal tea drinks 🍵｜Cold-brew peach oolong for summer, hot brown-sugar ginger tea for winter", "Care for your body with the seasons, and taste the tea spreading across your tongue.", "四季季節茶飲製作 🍵｜夏日冷萃蜜桃烏龍與冬日熱黑糖薑茶", "根據節氣照顧自己的身體，品味茶香在舌尖蔓延的質感。", "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600"],
-    ["sneaker.vault", 16210, "Minimal skincare and makeup removal 🧴｜A light, fresh daily routine for your skin", "Remove the day's makeup and fatigue, and let your skin breathe again.", "極簡護膚與卸妝保養 🧴｜給肌膚減負的清爽日常", "卸下一整天的彩妝與疲憊，還原肌膚最初的呼吸感。", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["cafe.hop", 12730, "Weekend road-trip Camping Vlog 🏕️｜Finding inner peace in nature", "Pitch the tent, light the campfire, watch the starry sky, and all your worries fade away.", "週末自駕露營 Camping Vlog 🏕️｜在大自然中找回內心的平靜", "搭起帳篷、升起篝火，看著滿天星空，所有的煩惱都煙消雲散。", "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600"],
-    ["luxe.lin", 23384, "Homemade bread and sourdough diary 🍞｜The healing process of kneading dough by hand", "The miracle of rising dough: crispy outside, soft inside, fresh from the oven, pure happiness!", "手作麵包與酸酵母發酵日記 🍞｜享受麵團在手中揉捏的療癒過程", "麵團緩緩膨脹的奇蹟，剛出爐的外酥內軟讓人幸福感爆棚！", "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600"],
-    ["firstclass.k", 14966, "Japanese-style cold bento ideas 🍱｜Pretty rice balls and tamagoyaki", "A small, colorful lunchbox full of care and excitement the moment you open the lid.", "日系便當冷餐提案 🍱｜精緻飯糰與玉子燒的美味組合", "色彩繽紛的小巧便當，打開蓋子的瞬間充滿心意與期待。", "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600"],
-    ["dream.desk", 21047, "City Ride 🚲｜Rediscovering the city at 15 km/h", "Weaving through old streets and alleys, catching sunlight through the leaves.", "城市單車漫遊 City Ride 🚲｜用 15 公里的速度重新認識這座城市", "穿梭在老街小巷，捕捉陽光穿透樹葉的斑駁光影。", "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600"],
-    ["tea.spill.hs", 41203, "An immersive reading afternoon 📖｜A cup of hot tea and a book that calms the mind", "With the sound of turning pages, let your thoughts fly to faraway worlds.", "感官沈浸式閱讀午後 📖｜一杯熱茶與一本沉澱心靈的好書", "在實體書頁的翻動聲中，讓思緒飛揚到遙遠的世界。", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"],
-    ["anon.confess", 35874, "30-day no-buy challenge for non-essentials 💳｜A money diary rethinking my relationship with stuff", "After emptying my shopping cart, I realized what I already have is rich and beautiful enough.", "挑戰 30 天不購買非必需品 💳｜重塑與物質關係的理財紀錄", "清空購物車後發現，原來我擁有的已經足夠豐富與美好。", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"]
-  ],
-  friends: [
-    ["screenshot.q", 28432, "10 years of friendship in our group 💕｜From high school all the way to weddings!", "The best friendship: no need to pretend, always there for each other! This is a dream friendship.", "我們這群朋友的 10 年友情 💕｜一起從高中走到結婚!", "最好的友情就是：見面不用裝，隨時都在！這才是夢幻神仙友誼。", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600"],
-    ["the.real.tea", 33019, "How to tell if your friends are 'secretly excluding' you? 😢｜5 social clues that reveal your place in the group", "Not tagged in their Stories? Group chat suddenly quiet? Learn to spot fake best friends.", "如何判斷你被朋友『隱性排擠』了？ 😢｜5 個社交細節測出你在圈子裡的地位", "限動沒標記你？聊天群組突然安靜？教你看穿假面閨蜜。", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"],
-    ["hot.take.daily", 22675, "A real guide to high 'EQ' socializing 🤝｜3 speaking tips that make people like you instantly", "Say goodbye to social anxiety! Master these tricks and handle any situation with ease.", "真正的『高情商』社交指南 🤝｜讓人一眼就喜歡你的 3 個說話技巧", "告別社交恐懼！掌握這幾招，讓你在任何場合都遊刃有餘。", "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600"],
-    ["expose.page", 30981, "How to stop being a people-pleaser? 🛑｜Stop hurting yourself and set strong social boundaries", "Your kindness needs an edge! Learn to say no, and people will respect you more.", "如何戒掉『討好型人格』？ 🛑｜停止委屈自己，建立強大社交邊界", "你的善良必須有點鋒芒！學會拒絕，別人反而更尊重你。", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600"],
-    ["who.said", 18440, "When a friend quietly starts getting ahead of you... 😔｜How to deal with jealousy and the gap between peers?", "Everyone around you is shining while you're stuck in place. What should you do?", "當朋友開始悄悄超越你... 😔｜如何面對同儕之間的嫉妒與落差感？", "看到身邊的人發光發熱，自己卻還在原地踏步，該怎麼辦？", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600"],
-    ["ratio.king", 26508, "Stay away from these 3 'vampire' friends 🙅‍♀️｜Cut your losses in draining relationships!", "People who only complain to you and crush your confidence don't deserve a place in your life.", "遠離這 3 種『吸血鬼型』朋友 🙅‍♀️｜高耗能關係必須及時止損！", "只會向你抱怨、打壓你自信的人，不值得留在你的生命裡。", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"],
-    ["class207", 412, "A day in the life of a university club leader 🌟｜How to juggle studies, clubs and relationships?", "Busy but so fulfilling! Finding like-minded partners who shine together in a club.", "大學社團幹部的一天 🌟｜如何同時搞定課業、社團與人際關係？", "忙碌但無比充實！在社團找到一群志同道合、一起發光的夥伴。", "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600"],
-    ["debate.team", 887, "Everyday 'social anxiety' of young people today 🙈｜How many of these awkward moments do you relate to?", "Pretend not to see someone you know on the street? Write a script before making a phone call?", "當代青年的『社恐』日常 🙈｜這些尷尬瞬間你中了幾個？", "路上遇到熟人裝作沒看到？打電話前要先寫草稿？", "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600"],
-    ["grandma.sun", 1543, "Dream dorm! 4 years of funny daily life with my roommates 👭", "Thanks for not killing me! How lucky to have roommates who get you and go crazy with you?", "神仙宿舍！我們室友之間的 4 年搞笑日常 👭", "感謝不殺之恩！遇到一群懂你、陪你發瘋的室友有多幸運？", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600"],
-    ["alex.wu", 236, "How to see through 'fake' or scheming people around you? 🍵｜4 social tactics to protect yourself", "Always stay on guard! Spot fake behavior and stop being taken advantage of.", "如何看穿身邊的『綠茶/心機人』？ 🍵｜保護自己的 4 個社交心機", "防人之心不可無！識別偽善言行，不再當冤大頭。", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600"],
-    ["hoops.hs", 519, "Is too much empathy an illness? 🧠｜Learn 'emotional detachment' to protect your mental energy", "Other people's emotions are not your responsibility! Stop absorbing negative junk from outside.", "過度共情是一種病？ 🧠｜學會『情感隔離』，保護你的心理能量", "別人的情緒不是你的責任！停止接收外界的負面垃圾。", "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600"],
-    ["jo.lin", 764, "The deep emptiness after a party... 🎈｜Do you get a 'social hangover' too?", "The person laughing hardest on the outside doesn't want to say a word once they get home.", "派對熱鬧過後的極度空虛感... 🎈｜你也有『社交後宿醉』嗎？", "表面上笑得最開心的人，回家後卻連一句話都不想說。", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600"],
-    ["photo.club", 301, "How to be someone people feel comfortable talking to? 🗣️｜The art of listening", "Talk less about yourself and listen more! 3 questions that help people open up.", "如何成為一個讓人感覺舒服的聊天者？ 🗣️｜傾聽的藝術", "少談論自己，多傾聽他人！3 個讓對方打開心扉的提問技巧。", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"],
-    ["bff.pei", 1102, "Vlog with my best friend 👭｜Matching outfits for the newest exhibition!", "With you by my side, even boring days sparkle!", "我和閨蜜的同框 VLOG 👭｜一起穿姐妹裝去打卡最新展覽！", "有你陪在身邊，連無聊的日常都變得閃閃發光！", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600"],
-    ["guitar.day12", 933, "How to get along with people with very different personalities? 🧩｜Bridging personality gaps with acceptance", "Respect differences and find common ground! Different personalities can create great sparks.", "如何與性格迥異的人相處？ 🧩｜跨越個性鴻溝的包容之道", "尊重差異，求同存異！不同性格也能擦出美好的火花。", "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600"],
-    ["sketch.min", 1407, "How to build strong 'mental resilience'? 🛡️｜Staying calm when facing criticism and attacks online", "Other people's opinions can't define you! Build a thicker skin and be the master of your own life.", "如何建立強大的『心理韌性』？ 🛡️｜面對社群批評與中傷的坦然之道", "別人的評價定義不了你！培養鈍感力，做自己人生的主人。", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600"],
-    ["code.kid", 688, "Parting ways at university graduation 🎓｜How to say goodbye to youth and friends gracefully?", "All good things must end. Let's head toward bright futures with each other's blessings!", "大學畢業季的分道揚鑣 🎓｜如何優雅地與青春和朋友告別？", "天下沒有不散的筵席，帶著祝福各自奔赴美好的未來！", "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600"],
-    ["baker.yu", 1219, "How to bravely share your opinions in a group? 🎙️｜Overcoming the fear of speaking up", "Your voice matters! 3 small steps to beat nerves and speak with confidence.", "如何在團體中勇敢發表自己的觀點？ 🎙️｜克服公開表達恐慌", "你的聲音很重要！3 個小步驟讓你克服緊張、自信發言。", "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600"],
-    ["photo.walk", 2860, "How to handle a friend who's hot and cold? 🌡️｜Reading subtle changes in social distance", "Don't overthink it! Giving each other space is a sign of mature friendship.", "如何面對朋友的『忽冷忽熱』？ 🌡️｜解讀社交距離的微妙變化", "不要過度腦補！給彼此空間，才是成熟友誼的表現。", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"],
-    ["plant.parent", 1734, "Building a quality social circle 🤝｜How to attract like-minded, high-energy friends?", "You attract people on the same wavelength! Improving yourself is the best way to grow your network.", "打造優質社交圈 🤝｜如何吸引志同道合的高能量夥伴？", "你吸引來的都是你的同頻者！提升自己是擴展人脈的最佳方式。", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600"],
-    ["lego.lab", 3092, "Overcoming FOMO (fear of missing out) 🛑｜Learning to enjoy JOMO (the joy of missing out)", "So what if you miss the party? Watching a good movie at home is the ultimate treat!", "克服 FOMO (錯失恐懼症) 🛑｜學會享受 JOMO (樂於錯失)", "錯過派對又怎樣？在家看一部好電影才是極致的享受！", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"],
-    ["chess.tw", 574, "Touching moments reuniting with old friends ☕｜A bond and warmth that time can't take away", "Years apart, yet the moment we talk it's just like before! True friendship stands the test of time.", "與老朋友重逢的感動瞬間 ☕｜時間帶不走的默契與溫暖", "多年未見，一開口依然是當年的模樣！真正的友情經得起歲月考驗。", "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600"],
-    ["shiba.mochi", 5481, "How to handle money boundaries between friends? 💳｜3 rules for talking about money without hurting the friendship", "Even the best friends should keep clear accounts! Split the bill and set clear rules for lending.", "如何處理朋友間的金錢界線？ 💳｜談錢不傷感情的 3 個原則", "再好的朋友也要明算帳！主動 AA 製與清晰的借貸原則。", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600"],
-    ["campus.cat", 3920, "A cross-border friendship across time zones and cultures 🌏｜My exchange story with an overseas buddy", "Language and culture meet! Seeing a wider world in each other.", "跨國友誼跨越時差與文化 🌏｜我和海外 Buddy 的交換生故事", "語言與文化的碰撞！在彼此身上看見更廣闊的世界。", "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600"],
-    ["otter.daily", 6702, "How to give quality support to a friend going through a hard time? 🌧️｜Gentle listening without lecturing", "Sometimes just quietly being by their side is more powerful than any advice.", "如何給予低潮中的朋友高質量陪伴？ 🌧️｜不講大道理的溫柔傾聽", "有時候，靜靜地陪在他身邊，比給予任何建議都更有力量。", "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600"],
-    ["duckling.cam", 4318, "How can new employees build good relationships with senior colleagues? 👔｜Boundaries of politeness and professionalism", "Be neither humble nor arrogant! Ask for advice while thinking for yourself, and earn respect at work.", "職場新鮮人如何與前輩建立良性互動？ 👔｜禮貌與專業的邊界感", "不卑不亢！虛心請教同時保持獨立思考，贏得職場尊重。", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600"],
-    ["goat.opinions", 2655, "A communication agreement with flatmates 🏠｜How to gracefully handle different living habits?", "Consideration and clear rules! Set a cleaning schedule to make shared living easy and pleasant.", "與合租室友的溝通公約 🏠｜如何優雅地解決生活習慣差異？", "公德心與明確規矩！訂立清潔輪值表，讓合租生活輕鬆愉快。", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600"],
-    ["parrot.pal", 3187, "When a friend gets a partner... 💔｜How to adjust to being the third wheel or pushed to the edge?", "Be happy that your friend found love, give each other space, and build your own life focus.", "當朋友有了伴侶後... 💔｜如何適應『三人行』或社交邊緣化？", "祝福朋友找到幸福，同時給予彼此獨立空間，培養個人生活重心。", "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600"],
-    ["kitten.zoom", 4876, "Meeting online friends in real life 📱➔🤝｜The surprise of going from screen to reality", "After chatting for six months, we finally met! We clicked even better than I imagined.", "線上好友線下見面會 📱➔🤝｜從螢幕走進現實的驚喜時刻", "聊了半年的網友終於見面了！比想像中還要投緣的奇妙體驗。", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600"],
-    ["rescue.dogs", 7713, "How to deal with nasty rumors among friends? 🛡️｜Let facts and time prove your innocence", "Don't get swept up in rumors! Keep a clear conscience; real friends will choose to believe you.", "如何面對朋友間的惡意謠言？ 🛡️｜用事實與時間證明清白", "不隨谣言起舞！保持內心坦蕩，真正的朋友會選擇相信你。", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600"]
-  ],
-  hobby: [
-    ["meme.hs", 4402, "My efficient iPad note-taking 📝｜A complete guide to paperless digital study", "Build a dream digital planner with GoodNotes and make revision a visual treat!", "我的高效率 iPad 筆記術 📝｜數位化無紙化學習全攻略", "用 GoodNotes 打造夢幻電子手帳，讓複習變成一種視覺享受！", "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600"],
-    ["lol.daily", 3815, "I read for 100 days in a row! 5 must-read books that changed my life 📚", "Read 30 minutes a day, and the difference after a year will surprise you!", "挑戰連續 100 天閱讀！改變我人生的 5 本必讀神書 📚", "每天閱讀 30 分鐘，一年累積的差距會讓你驚訝！", "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600"],
-    ["skit.bros", 5209, "30-day calligraphy / fountain-pen handwriting challenge 🖋️｜Feeling the warmth of words with a calm mind", "Every stroke settles the mind. So satisfying to see my handwriting get neater!", "挑戰 30 天書法/鋼筆字練習 🖋️｜靜心感受文字的溫度", "一筆一畫都是心境的沉澱，字跡越來越秀氣的成就感！", "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600"],
-    ["dadjoke.tw", 1928, "Guitar and singing for total beginners 🎸｜Play popular songs with just 3 chords", "No complicated music theory! Play your very first song on guitar today.", "零基礎吉他彈唱教學 🎸｜3 個和弦輕鬆彈出熱門流行歌曲", "不用複雜樂理！今天就用吉他彈出屬於你的第一首歌。", "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600"],
-    ["cat.memes", 2774, "Getting started with film photography 📸｜Recording life in warm film tones", "The excitement of waiting for prints! Every frame is a moment that can't be copied.", "底片相機底片攝影入門 📸｜用底片的溫暖色調記錄生活", "等待沖洗的期待感！每一張底片都是無法複製的時光碎片。", "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600"],
-    ["sketch.duo", 3561, "Everyday watercolor illustration 🎨｜Painting a dreamy starry sky", "Watching watercolor spread across the paper, all my stress is healed by color.", "水彩插畫畫畫日常 🎨｜用顏料渲染出一片夢幻星空", "看著水彩在紙上擴散開來，所有的壓力都被色彩治癒了。", "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600"],
-    ["pun.master", 2093, "Homemade French chiffon cake 🍰｜Secrets to whipping egg whites so it never collapses", "The smell of milk fills the oven as I bake a cake as fluffy as a cloud.", "法式手作烘焙戚風蛋糕 🍰｜打發蛋白與完美不塌陷秘訣", "烤箱裡飄出陣陣奶香，親手做出如雲朵般綿密的烘焙蛋糕。", "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600"],
-    ["typo.life", 3340, "Learn to knit from scratch 🧶｜Knit yourself a warm scarf for autumn and winter", "Stitch by stitch, weaving warmth and care into the yarn.", "零基礎學會手作編織 🧶｜為自己編織一條溫暖的秋冬圍巾", "一針一線的專注，把溫暖與心思揉進毛線裡。", "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=600"],
-    ["mei.glow", 38211, "Lego Setup 🧱｜Building my own Marvel heroes display wall", "Calm focus while building, and a huge sense of achievement when it's done!", "樂高積木手作 Lego Setup 🧱｜打造專屬自己的漫威英雄展示牆", "拼搭過程中的專注與平靜，完成瞬間的成就感爆棚！", "https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?w=600"],
-    ["yuting_", 21540, "Beginner home bartending 🍸｜A bar-quality Mojito with affordable base spirits", "Fresh mint and clinking ice: a tipsy weekend-night ritual.", "基礎居家調酒入門 🍸｜用平價基酒調出酒吧等級的莫希托 (Mojito)", "清爽薄荷配上冰塊碰撞聲，週末夜晚專屬的微醺儀式感。", "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600"],
-    ["kai.fits", 17402, "Pottery wheel throwing for beginners 🏺｜Feeling the clay take shape in your hands", "Focus on the pressure of your fingertips and turn spinning clay into a one-of-a-kind piece.", "零基礎手作陶藝拉胚 🏺｜感受泥土在手中塑形的溫度", "專注於指尖的力道，讓旋轉的泥土變成獨一無二的陶器。", "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600"],
-    ["soft.daily", 26930, "Leather Craft for beginners ✂️｜Cutting and sewing your own leather card holder", "The feel of leather and the shine it gains over time: a handmade item that stays with you for years.", "新手手作皮件 Craft ✂️｜裁切與縫製一個專屬皮質名片夾", "皮革的質感與歲月光澤，打造能陪伴你很久的手作物件。", "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600"],
-    ["hsin__", 14388, "English Calligraphy ✍️｜Practicing the art of quill and ink", "Master the rhythm of light and heavy strokes and let the letters dance on the page.", "英文花體字 Calligraphy ✍️｜羽毛筆與墨水交織的美學練習", "掌握輕重筆觸的節奏，讓英文花體字在紙上優雅躍動。", "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600"],
-    ["beautylab.tw", 31277, "Cool skateboarding for beginners 🛹｜A guide to cruising and basic balance moves", "Fall down and get back up! Feel the freedom of the breeze through your hair.", "新手滑板酷炫入門 🛹｜刷街與刷板基礎平衡動作指南", "摔倒再站起來！感受微風穿過髮絲的自由與酷炫。", "https://images.unsplash.com/photo-1520045892732-304bc3ac5d8e?w=600"],
-    ["ivy.ootd", 19055, "Flower arranging for beginners 💐｜A floral class to brighten your living space", "Balance focal flowers, fillers and greenery, and fill your room with the scent of nature.", "零基礎學會花藝插花 💐｜用鮮花妝點生活空間的花藝課", "主花、陪襯與葉材的空間搭配，讓房間充滿大自然的花香。", "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=600"],
-    ["lumi.edit", 42716, "Making cold-process handmade soap 🧼｜A perfect blend of natural oils and fragrance", "Mix the oils and lye, then let it cure for a month: natural care for your skin.", "手工冷製手工皂製作 🧼｜天然油脂與香氛的完美融合", "攪拌油脂與鹼水，靜置一個月等待熟成的天然肌膚呵護。", "https://images.unsplash.com/photo-1607006344380-b772439eeb2a?w=600"],
-    ["fit.chen", 24310, "Intro to video editing software ✂️｜Editing story-driven Vlogs in CapCut/Premiere", "Transitions, beat-syncing and color grading! Turn scattered clips into a precious record of life.", "基礎剪輯軟體入門 ✂️｜用剪映/Premiere 剪出故事感 Vlog", "轉場、卡點與調色！將零碎的影片片段拼湊成珍貴的生活紀錄。", "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=600"],
-    ["cleaneats.jo", 33102, "Digital drawing in Procreate from zero 🎨｜Drawing cute stickers on an iPad", "The magic of layers and brushes! Create your own stickers even with no drawing background.", "零基礎數位繪圖 Procreate 🎨｜用 iPad 畫出可愛表情包", "圖層與筆刷的魔法！零繪畫基礎也能創作專屬貼圖。", "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600"],
-    ["gymrat.lee", 15877, "Bouldering for beginners 🧗‍♂️｜Solving climbing routes with brains and strength", "Every route is a puzzle! Feel the thrill and achievement of reaching the top.", "新手攀岩抱石 Bouldering 🧗‍♂️｜用智慧與體能破解岩壁路線", "每一條路線都是一場思考解謎！體驗登頂瞬間的興奮與成就感。", "https://images.unsplash.com/photo-1522163182402-834f871fd951?w=600"],
-    ["run.ann", 20441, "Handmade scented soy candles 🕯️｜A romantic craft with dried flowers and essential oils", "Melt soy wax, add dried petals, and make your own dreamy candle.", "手作香氛大豆蠟燭🕯️｜乾花與香氛精油的浪漫手作體驗", "熔化大豆蠟，點綴乾燥花瓣，打造專屬自己的夢幻蠟燭。", "https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600"],
-    ["shred.club", 27519, "Appreciating vinyl records 🎶｜The retro feel and warm sound of analog audio", "The needle drops and the record slowly spins: the most authentic retro music experience.", "基礎黑膠唱片賞析 🎶｜感受類比音訊的復古質感與溫暖音色", "指針落下，黑膠唱片緩緩旋轉，感受最真實的音樂復古碰撞。", "https://images.unsplash.com/photo-1539375665275-f9de415ef9ac?w=600"],
-    ["tia.moves", 22903, "Gundam model building and decal tutorial 🤖｜Fine panel lining and spray-painting", "From cutting and sanding parts to painting, patience brings the model to life.", "模型鋼彈拼裝水貼教學 🤖｜精細刻線與噴漆的上色日常", "零件切削、打磨到上色，用耐心賦予模型靈魂與生命力。", "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600"],
-    ["macro.max", 29760, "Handmade Cyanotype sun prints ☀️｜Leaving blue prints with sunlight and plants", "A classic photographic craft! Leaves print in beautiful Prussian blue under the sun.", "手作日光藍曬印相 Cyanotype ☀️｜用陽光與植物留下藍色印記", "古典攝影工藝！植物葉片在陽光下曬出美麗的普魯士藍。", "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600"],
-    ["lean.season", 18624, "Learning French/Japanese from zero 🗣️｜Daily check-ins with a language app", "15 minutes a day opens the door to a new language and different cultures.", "零基礎學法文/日文 🗣️｜語言學習 App 的每日打卡日常", "每天 15 分鐘，打開新語言的大門，探索不同的文化世界。", "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600"],
-    ["jetset.ray", 25118, "Making a metal ring by hand 💍｜Hammering, sawing and polishing your own silver jewelry", "Every hammer strike adds warmth as you craft your own silver ring.", "手作金工戒指製作 💍｜鍛打、鋸切與拋光專屬銀飾", "每一次捶打都是溫度的注入，親手打造專屬的銀質戒指。", "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600"],
-    ["rich.tea", 19902, "Beginner camping pour-over coffee kit ☕｜Freshly ground coffee in the mountains", "A breeze in nature plus the smell of freshly ground coffee: the ultimate luxury.", "新手露營咖啡手沖組 ☕｜在山林間享用一杯剛磨好的咖啡", "大自然的微風加上新鮮現磨的咖啡香，這才是最頂級的享受。", "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600"],
-    ["villa.vibes", 30455, "Handmade leather bookbinding 📚｜Making a notebook that carries warmth for years", "Cut the paper, punch holes, hand-stitch, and wrap your story in leather.", "手作皮革書籍裝幀 📚｜打造一本能傳承溫度的手作筆記本", "裁切紙張、打孔到手工縫線，用皮革包覆屬於你的故事。", "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600"],
-    ["sneaker.vault", 16210, "Drumming for beginners 🥁｜Hitting powerful beats to fast-paced music", "Release all your energy with your hands and feet! The fun of percussion full of rhythm.", "新手爵士鼓 Drumming 🥁｜跟著快節奏音樂打出震撼鼓點", "用雙手與雙腳釋放全身能量！節奏感爆棚的打擊樂樂趣。", "https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=600"],
-    ["cafe.hop", 12730, "Handmade resin jewelry 💧｜Sealing dried flowers and gold leaf in clear crystal forever", "The magic of curing resin turns your best moments into lasting jewelry.", "手作樹脂滴膠飾品 💧｜將乾燥花與金箔永久封存在透明水晶裡", "滴膠凝固的魔法，把最美好的瞬間凝固成永恆的飾品。", "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600"],
-    ["luxe.lin", 23384, "Basic snorkeling and freediving 🦭｜Exploring the underwater world freely like a fish", "Dive down on one breath and feel the calm of the blue ocean and its sea life.", "基礎浮潛與自由潛水 🦭｜像魚一樣無拘無束漫遊海底世界", "一口氣下潛，感受蔚藍大海的平靜與海洋生物的擁抱。", "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600"]
-  ],
-  animals: [
-    ["firstclass.k", 14966, "I could watch this cat video 100 times 🐱｜Super cute pet meme compilation", "What harm could a little kitten mean? A day of being hit by cuteness!", "這個貓咪影片我能重複看 100 遍 🐱｜超級萌寵迷因集錦", "小貓咪能有什么壞心思呢？被可愛爆擊的一天！", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600"],
-    ["dream.desk", 21047, "Funny sneaky dog 🐾｜What it secretly does when the owner isn't home", "It thought it was well hidden, but the camera caught everything!", "鬼鬼祟祟的搞笑小狗 🐾｜趁主人不在家時偷偷做的事", "以為隱蔽得很好，結果全被監視器拍下來了！", "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600"],
-    ["tea.spill.hs", 41203, "A must-read guide for new cat owners 🐱｜How to build a dream room your cat will love?", "From choosing a litter box to setting up a cat tree, give your 'boss' the best care!", "新手養貓必看指南 🐱｜如何打造貓咪喜歡的夢幻貓房？", "從貓砂盆選擇到貓跳台佈置，給主子最好的照顧！", "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600"],
-    ["anon.confess", 35874, "Satisfying dog-washing Vlog 🧼｜Rescuing a Samoyed that rolled in mud", "From a muddy mess back to a snow-white fluffball! A super satisfying cleaning process.", "沉浸式洗狗 Vlog 🧼｜拯救一隻在泥巴裡滾過的薩摩耶", "從髒兮兮的泥巴狗變回雪白大白熊！極致療癒的清潔過程。", "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600"],
-    ["screenshot.q", 28432, "A stray cat rescue story 🐾｜From fearful and defensive to rolling over for belly rubs", "Melting a stray's fear with love and patience, and witnessing a little miracle of life.", "流浪貓咪救援紀錄 🐾｜從警戒防備到翻肚子討摸摸的轉變", "用愛心與耐心融化小流浪的戒心，見證生命的奇蹟與溫暖。", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600"],
-    ["the.real.tea", 33019, "Funny Corgi butt wiggle 🍑｜The everyday joy of a short-legged dog", "Short legs and a bouncy butt! Watching it run can make you laugh all day.", "搞笑柯基屁股基情旋轉 🍑｜短腿狗狗的日常快樂源泉", "小短腿與電動屁股！看著牠跑步的背影就能開懷大笑一整天。", "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600"],
-    ["hot.take.daily", 22675, "Making a fresh homemade meal for my cat 🐟｜Nutritious, additive-free and tasty", "Steamed salmon and chicken breast: a healthy, nutritious feast for my 'boss'.", "沉浸式手作貓咪鮮食便當 🐟｜無添加營養美味提案", "親手蒸鮭魚與雞胸肉，為主子做一頓健康營養滿分的美味大餐。", "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600"],
-    ["expose.page", 30981, "Border Collie agility training 🐕‍🦺｜The smartest dog takes on a high-speed obstacle course", "Faster than human reflexes! An amazing show of teamwork through jumps and tunnels.", "邊境牧羊犬敏捷犬訓練 🐕‍🦺｜犬界智商天花板的極速障礙挑戰", "超越人類反應速度！飛躍障礙與過隧道的神級默契展演。", "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600"],
-    ["who.said", 18440, "A giant capybara enjoys a hot bath 🛁｜The animal that is the definition of chill", "A yuzu on its head, soaking in a hot bath: a carefree, relaxing afternoon.", "巨型水豚君沉浸式泡湯 🛁｜極致鬆弛感的代表動物", "頭頂柚子、泡著熱湯，享受沒有煩惱的悠閒午後時光。", "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=600"],
-    ["ratio.king", 26508, "A sleepy cat's daily life 💤｜Falling asleep to the sound of purring", "Put on your headphones and listen to purring like a little engine, easing all your anxiety and sleeplessness.", "萌寵貓咪的打瞌睡日常 💤｜聽著貓咪打呼嚕聲沉沉入睡", "戴上耳機，聽著發動機一樣的咕嚕聲，治癒你所有的焦慮與失眠。", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600"],
-    ["class207", 412, "Cute hamster eating a baby carrot 🐹｜A mukbang with cheeks stuffed full", "A hamster's little chewing mouth is so healing! I could watch it eat all day.", "萌寵鼠鼠吃小胡蘿蔔 🐹｜兩頰塞得鼓鼓囊囊的吃播現場", "倉鼠的咀嚼小嘴巴太治癒了！看牠吃東西能看一整天。", "https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600"],
-    ["debate.team", 887, "A super smart Golden Retriever 🦮｜The amazing dog that fetches packages and closes doors", "A warm-hearted Golden! Not just a little helper, but the sweetest family member.", "極致聰明的金毛尋回犬 🦮｜會幫主人拿快遞與關門的神仙狗狗", "暖心大金毛！不僅是生活小幫手，更是最貼心的家庭成員。", "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600"],
-    ["grandma.sun", 1543, "Aquascaping and ornamental fish 🐟｜Building a tiny underwater world at home", "Watching colorful angelfish swim among the plants, feel the calm and mystery of the underwater world.", "水族箱沉浸式造景與觀賞魚 🐟｜在家打造一塊微型海底世界", "看著七彩神仙魚在水草間游動，感受水下世界的寧靜與奧秘。", "https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=600"],
-    ["alex.wu", 236, "The battle to trim a cat's nails and brush its teeth 🪥｜How to get your cat to cooperate?", "No more fighting! Use treats and a gentle touch to make daily care easy.", "萌寵貓咪剪指甲與刷牙大作戰 🪥｜如何讓主子乖乖配合？", "不再像打架！用零食獎勵與溫柔手法，輕鬆搞定貓咪日常清潔。", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600"],
-    ["hoops.hs", 519, "A stubborn Shiba Inu that won't go home 🐕｜The hilarious daily life of a 'Shiba refusal'", "Rolling on the ground and refusing to budge on the leash! The weirdly stubborn Shiba personality revealed.", "柴犬固執不想回家 🐕｜原地化身『拒絕柴』的爆笑日常", "躺在地上打滾扯不動脖圈！柴犬的奇葩固執性格大公開。", "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600"],
-    ["jo.lin", 764, "A baby hedgehog's bath and stretch 🦔｜A little cutie that opens up like a flower", "Slowly uncurling its spiky body in warm water, tiny feet paddling: so cute!", "小刺蝟洗澡伸展全紀錄 🦔｜展開變成一朵小花的小可愛", "溫水浸泡下慢慢展開刺刺的身軀，小腳丫打水太萌了！", "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=600"],
-    ["photo.club", 301, "A heartwarming story of adopting a senior dog 🐕‍🦺｜Giving an old treasure a warm home", "Gratitude and gentleness in its eyes! A senior dog's calm, gentle nature is so touching.", "領養老犬的溫馨故事 🐕‍🦺｜給歲月沉澱的老寶貴一個溫暖的家", "眼神裡的感謝與溫柔！老犬的懂事與安靜讓人無比心疼與感動。", "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600"],
-    ["bff.pei", 1102, "A kitten sees snowflakes for the first time ❄️｜Curiously reaching out a paw", "Eyes sparkling with curiosity about the world! Cute reactions to its first snowy day.", "小貓咪第一次看到雪花 ❄️｜出於好奇用貓爪試探伸出", "眼裡閃爍著對 world 的好奇！初次體驗下雪天的可愛反應。", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600"],
-    ["guitar.day12", 933, "A funny talking parrot with crazy dance moves 🦜｜What's it like living with a chatty bird?", "Bobbing its head to the music! It even imitates the doorbell and its owner's laugh.", "搞笑鸚鵡學說話與魔性舞蹈 🦜｜家裡養了一隻話精鳥寶是什麼體驗？", "跟著音樂節奏搖頭晃腦！還會模仿門鈴聲與主人笑聲。", "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600"],
-    ["sketch.min", 1407, "A cute bunny eating alfalfa 🐰｜A twitching little nose and big ears", "Soft and fluffy: watching a bunny munch on grass instantly softens your mood.", "萌寵小兔兔吃苜蓿草 🐰｜動不停的小鼻子與大耳朵", "軟綿綿的毛茸茸觸感，看著兔兔嚼草心情瞬間變得柔軟起來。", "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=600"],
-    ["code.kid", 688, "New cat owner's guide to stopping furniture scratching 🛋️｜How to get your cat to love a scratching board?", "Save your sofa! Use catnip and the right scratching board to guide your cat.", "新手養貓防抓家具攻略 🛋️｜如何讓貓咪愛上貓抓板？", "拯救你的沙發！用貓薄荷與合適材質的抓板引導貓咪磨爪。", "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600"],
-    ["baker.yu", 1219, "A dog greeting its owner home from work 🐶｜A tail spinning like a helicopter blade", "The moment the door opens, you're surrounded by pure love! The greatest joy of having a dog.", "萌寵狗狗迎接主人下班瞬間 🐶｜尾巴搖成直升機螺旋槳", "開門的瞬間被全心全意的愛包圍！這就是養狗最大的幸福感。", "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600"],
-    ["photo.walk", 2860, "A kitten's fluffy moment after a bath 🐱｜Instantly turned into a white cloud under the hairdryer", "Like a little mouse in the bath, then puffed up like a fluffy marshmallow after drying!", "小貓咪洗澡後的爆毛時刻 🐱｜秒變吹風機下的白雲朵", "洗澡時像小老鼠，吹乾後瞬間膨脹成蓬鬆小棉花糖！", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600"],
-    ["plant.parent", 1734, "An amazing tortoise slowly eating cabbage 🐢｜The stress-relieving philosophy of a slow pace", "One bite of cabbage, a minute of chewing! Feel the tortoise's calm in a fast-paced world.", "神奇陸龜慢吞吞吃高麗菜 🐢｜極致慢節奏的解壓哲學", "一口高麗菜嚼一分鐘！在快節奏世界裡感受陸龜的悠閒。", "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=600"],
-    ["lego.lab", 3092, "Cute moment of a dog sneezing 🐶｜Hilariously scaring itself", "Frozen after one sneeze, then shakes its head and happily goes back to its toy.", "萌寵狗狗打噴嚏的可愛瞬間 🐶｜自己把自己嚇一跳的爆爆反應", "一個噴嚏後愣在原地，甩甩頭繼續開心地咬玩具。", "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600"],
-    ["chess.tw", 574, "A stray dog's transformation 🐾｜From dull eyes to eyes full of stars", "Amazing changes one month after adoption! Love is the best beautician.", "浪浪狗轉變全紀錄 🐾｜從眼神無光到眼裡有星辰大海", "收養一個月後的驚人變化！愛是最好的美容師。", "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600"],
-    ["shiba.mochi", 5481, "Cats react to catnip 🌿｜Refreshed or rolling around in a daze?", "One sniff of catnip and it rolls over for pets! A cat party in action.", "貓咪對貓草反應大公開 🌿｜神清氣爽還是迷幻打滾？", "聞到貓草瞬間翻滾討摸！貓咪的狂歡派對現場。", "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=600"],
-    ["campus.cat", 3920, "A guide dog's daily training and work 🦮｜Once in uniform, a fearless guardian", "Follow the rule: don't disturb, don't feed, don't refuse! A salute to the eyes of people with visual impairments.", "導盲犬的日常訓練與工作 🦮｜穿上工作服就是無畏的守護者", "請遵循『不打擾、不餵食、不拒絕』原則！向視障人士的眼睛致敬。", "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600"],
-    ["otter.daily", 6702, "A cat stretching and kneading 🐾｜The happiness of being 'kneaded' on your belly", "Soft little paws pressing again and again, with a happy purr.", "萌寵貓咪伸懶腰踏踏日常 🐾｜在主人的肚子上踩奶的幸福感", "軟軟的小爪子一下一下踩著，發出滿足的咕嚕咕嚕聲。", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600"],
-    ["duckling.cam", 4318, "A puppy running freely on the grass 🐕｜The joy of the wind blowing through its fur", "Sunshine, grass and running wild! This is the happy life a dog should have.", "沉浸式小狗戶外草地奔跑 🐕｜感受自由風吹過毛發的快樂", "陽光、草地與肆意奔跑！這才是狗狗該有的快樂生活。", "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600"]
-  ]
-};
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-2 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl ig-gradient flex items-center justify-center text-white shadow-md shrink-0">
+                    <i class="fa-brands fa-instagram text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight ig-text-gradient" data-i18n="appTitle">IG 全方位足跡分析</h1>
+                    <p class="text-xs text-slate-500" data-i18n="appSubtitle">瀏覽 + 按讚 + 典藏/儲存貼文 (Data Insights & Analytics)</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Language Switcher -->
+                <div class="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200" role="group" aria-label="Language Switcher">
+                    <button type="button" onclick="setLanguage('zh')" id="lang-zh" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-white text-pink-600 shadow-xs transition-all">中文</button>
+                    <button type="button" onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all">EN</button>
+                    <button type="button" onclick="setLanguage('vi')" id="lang-vi" class="px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all">Tiếng Việt</button>
+                </div>
 
-const T={
-en:{
-  eyebrow:"Algorithm literacy · classroom game",h1:"What the Feed Knows",
-  lede:"Scroll 30 posts the way you normally would. You won't search, follow, or type anything. Then open the algorithm's notebook and see what it learned about you.",
-  foot:"A simplified model for classroom use. Real platforms use far more signals, but the core loop is the same: what you pause on becomes what you see. All accounts and posts are fictional.",
-  r1:"Round 1",r2:"Round 2",
-  introH:"Just scroll.",introP:"You'll see 30 posts. Treat them like your real feed.",
-  introL:"<li><b>Pause</b> on anything that catches your eye.</li><li>Only <b>like</b> or <b>replay</b> posts you enjoy.</li><li>Skip what bores you.</li>",
-  introP2:"Don't try to beat the game yet. Round 2 is for that.",start:"Start scrolling",
-  keys:"Keys: ↓ or Space next · L like · R replay",
-  postN:(n,t)=>`Post ${n} / ${t}`,reset:"Reset suggestions",sugg:"Suggested for you",
-  like:"Like",replay:"Replay",ni:"Not interested",likes:n=>`${n.toLocaleString("en-US")} likes`,next:"Next post ↓",
-  toastReset:"Suggestions reset. Everything it learned about you is gone.",
-  r1done:"Round 1 done",r1doneH:"30 posts. Nothing typed.",
-  r1doneP:"You never told the feed what you like. Open the notebook to see what it decided anyway.",
-  toR2:"Round 2: Escape the rabbit hole",againR1:"Play Round 1 again",
-  r2H:"Escape the rabbit hole.",r2P:"You get 20 posts. You win if your <b>last 10 posts</b> have:",
-  r2L:"<li>at least <b>5 different types</b>, and</li><li>no more than <b>3 comparison posts</b> (warm colors)</li>",
-  r2P2:"New tools: <b>Not interested</b> on every post, and <b>Reset suggestions</b> (one use). Pausing still counts.",
-  stuck:"Start from a stuck feed",mine:"Start from my Round 1 feed",
-  r2done:"Round 2 done",winH:"You got out.",loseH:"Still stuck.",
-  winP:"Your feed opened back up. Check the notebook to see what did it.",
-  loseP:"The feed kept pulling you back. Check the notebook to see why.",
-  retry:"Try Round 2 again",restart:"Start over from Round 1",startOver:"Start over",
-  nbTitle:"The algorithm's notebook",recording:"Recording",locked:"Locked",
-  sigs:"Signals recorded",sigsNote:"pauses, likes and replays",
-  redactLbl:"What it thinks you want · redacted until post 30",
-  lockedNote:"Every second you spend on a post is written down here. So is every like and replay. You'll see the full notebook when Round 1 ends.",
-  revealTitle:"What it learned about you",unlocked:"Unlocked",
-  verdict:(lab,col,p)=>`To this feed, you are mostly <b style="color:${col}">${lab}</b>. That's a ${p} chance for your next post.`,
-  your30:"Your 30 posts, in order",post1:"Post 1",testing:"Posts 1–5: testing you at random",
-  first10:"First 10 posts",last10:"Last 10 posts",typesN:n=>`${n} types`,compN:n=>`${n} comparison posts`,
-  odds:"Odds for your next post",strongest:"Strongest signals you sent",
-  paused:s=>`paused ${s}s`,liked:"liked",replayed:n=>`replayed ×${n}`,
-  none:"You skipped almost everything, so it learned very little. Most of what you saw came from the head start below.",
-  receipt:"The receipt",timeW:"Time watched",likesW:"Likes",replaysW:"Replays",skips:"Quick skips (under 1s)",typed:"Things you typed or searched",sec:s=>`${s}s`,
-  note1:"<b>Pausing is a vote.</b> Any post you looked at for more than a second counted as interest, even if it made you feel worse.",
-  note2:"<b>The game was tilted.</b> Before you scrolled at all, four types got a boost because they keep people watching: Appearance, Diet culture, and Lifestyle.",
-  warm:"Warm: comparison content",cool:"Cool: connection and interests",
-  liveTitle:"Round 2: the notebook is open",live:"Live",liveP:"This time you can watch the odds change after every post.",
-  typesL10:"Types in last 10 posts",need5:"need 5+",compL10:"Comparison posts in last 10",max3:"max 3",
-  soFar:"Your Round 2 feed so far",nothing:"Nothing yet.",
-  winT:"You got out",loseT:"Still stuck",result:"Round 2 result",
-  your20:"Your 20 posts · outlined = marked Not interested",did:"What you did",
-  niCount:"Marked Not interested",pausedComp:"Paused on a comparison post anyway",usedReset:"Used Reset suggestions",yes:"yes",no:"no",compOdds:"Comparison odds for your next post",
-  pausedNote:n=>`You paused on ${n} comparison post${n>1?"s":""}. Each pause told the feed to send more, even when you were only looking.`,
-  resetNote:"Reset erased what the feed had learned about you. It did not remove the platform's boost, so comparison content started creeping back right away.",
-  noResetNote:"Not interested works one post at a time. Reset is faster, but it can't remove the boost the platform gives some content.",
-  catherine:"This is one reason harmful content can return after someone unfollows and blocks, as Catherine describes in the Utah Insight segment. Users can steer, but the platform's design still pulls.",
-  discussT:"Discuss",
-  discuss:["Which of your actions did the algorithm count as interest? Which one surprised you?","Four types got a head start before you did anything. Why might a platform design it that way?","In Round 2, what worked? Did any content come back after you tried to remove it?","Catherine, in the Utah Insight segment, unfollowed and blocked accounts but still got harmful videos. How does this game help explain that?","Design one \"seatbelt\": a feature a platform could add to protect teens without banning the app."]
-},
-zh:{
-  eyebrow:"演算法素養 · 課堂遊戲",h1:"演算法知道你什麼",
-  lede:"像平常一樣滑完 30 則貼文。你不需要搜尋、追蹤或輸入任何東西。滑完後打開演算法的筆記本，看看它從你身上學到了什麼。",
-  foot:"這是課堂用的簡化模型。真實平台使用的訊號多得多，但核心機制相同：你停在哪裡，就會看到更多那類內容。所有帳號與貼文皆為虛構。",
-  r1:"第一回合",r2:"第二回合",
-  introH:"照常滑就好。",introP:"你會看到 30 則貼文，就當作是你真正的社交軟體。",
-  introL:"<li>看到吸引你的就<b>停下來</b>。</li><li>喜歡時在<b>按讚</b>或<b>重看</b>。</li><li>無聊的就滑走。</li>",
-  introP2:"先不要想破解遊戲，那是第二回合的事。",start:"開始滑",
-  keys:"鍵盤：↓ 或空白鍵下一則 · L 按讚 · R 重看",
-  postN:(n,t)=>`第 ${n} / ${t} 則`,reset:"重設推薦",sugg:"為你推薦",
-  like:"讚",replay:"重看",ni:"不感興趣",likes:n=>`${n.toLocaleString("zh-TW")} 個讚`,next:"下一則 ↓",
-  toastReset:"推薦已重設，它學到的關於你的一切都清除了。",
-  r1done:"第一回合結束",r1doneH:"30 則貼文，零輸入。",
-  r1doneP:"你從沒告訴動態牆你喜歡什麼。打開筆記本，看看它還是替你決定了什麼。",
-  toR2:"第二回合：逃出兔子洞",againR1:"重玩第一回合",
-  r2H:"逃出兔子洞。",r2P:"你有 20 則貼文。<b>最後 10 則</b>符合以下條件就獲勝：",
-  r2L:"<li>至少 <b>5 種不同類型</b>，而且</li><li>比較型貼文（暖色）<b>不超過 3 則</b></li>",
-  r2P2:"新工具：每則貼文都有<b>不感興趣</b>，還有<b>重設推薦</b>（限用一次）。停留仍然會被記錄。",
-  stuck:"從被困住的動態牆開始",mine:"從我第一回合的動態牆開始",
-  r2done:"第二回合結束",winH:"你逃出來了。",loseH:"還是被困住。",
-  winP:"你的動態牆重新變得多元。看看筆記本，是什麼起了作用。",
-  loseP:"動態牆一直把你拉回去。看看筆記本找原因。",
-  retry:"再玩一次第二回合",restart:"從第一回合重新開始",startOver:"重新開始",
-  nbTitle:"演算法的筆記本",recording:"記錄中",locked:"已鎖定",
-  sigs:"已記錄訊號",sigsNote:"停留、按讚與重看",
-  redactLbl:"它認為你想看什麼 · 第 30 則後公開",
-  lockedNote:"你在每則貼文停留的每一秒都會記在這裡，每次按讚和重看也是。第一回合結束後就能看到完整筆記本。",
-  revealTitle:"它從你身上學到了什麼",unlocked:"已解鎖",
-  verdict:(lab,col,p)=>`對這個動態牆來說，你主要是<b style="color:${col}">${lab}</b>的觀眾。你的下一則貼文有 ${p} 的機率是這類內容。`,
-  your30:"你的 30 則貼文（依順序）",post1:"第 1 則",testing:"第 1–5 則：隨機測試你",
-  first10:"前 10 則",last10:"後 10 則",typesN:n=>`${n} 種類型`,compN:n=>`${n} 則比較型貼文`,
-  odds:"下一則貼文的機率",strongest:"你送出最強的訊號",
-  paused:s=>`停留 ${s} 秒`,liked:"按讚",replayed:n=>`重看 ×${n}`,
-  none:"你幾乎全部滑過，所以它學到的很少。你看到的內容大多來自下方說明的起跑優勢。",
-  receipt:"明細",timeW:"觀看時間",likesW:"按讚",replaysW:"重看",skips:"快速滑過（不到 1 秒）",typed:"你輸入或搜尋的東西",sec:s=>`${s} 秒`,
-  note1:"<b>停留就是投票。</b>任何你看超過一秒的貼文都被算成「有興趣」，即使它讓你心情變差。",
-  note2:"<b>遊戲一開始就不公平。</b>你還沒開始滑，就有三類內容因為能讓人一直看下去而被加權：外貌、飲食文化、生活風格。",
-  warm:"暖色：比較型內容",cool:"冷色：人際連結與興趣",
-  liveTitle:"第二回合：筆記本已公開",live:"即時",liveP:"這次你可以看到每則貼文後機率如何變化。",
-  typesL10:"最後 10 則的類型數",need5:"需 5 種以上",compL10:"最後 10 則的比較型貼文",max3:"最多 3 則",
-  soFar:"目前的第二回合動態牆",nothing:"還沒有。",
-  winT:"你逃出來了",loseT:"還是被困住",result:"第二回合結果",
-  your20:"你的 20 則貼文 · 有框線＝標記不感興趣",did:"你做了什麼",
-  niCount:"標記不感興趣",pausedComp:"仍在比較型貼文上停留",usedReset:"使用重設推薦",yes:"是",no:"否",compOdds:"下一則是比較型內容的機率",
-  pausedNote:n=>`你在 ${n} 則比較型貼文上停留。每次停留都在告訴動態牆「多給我一點」，即使你只是看看。`,
-  resetNote:"重設清除了動態牆學到的關於你的偏好，但沒有移除平台的加權，所以比較型內容馬上又慢慢回來。",
-  noResetNote:"「不感興趣」一次只能處理一則。重設比較快，但無法移除平台給某些內容的加權。",
-  catherine:"這說明了為什麼有人取消追蹤、封鎖帳號後，有害內容仍會回來，就像 Catherine 在 Utah Insight 影片中說的。使用者可以調整方向，但平台的設計仍在拉扯。",
-  discussT:"討論",
-  discuss:["演算法把你的哪些動作當成「有興趣」？哪一個讓你意外？","你還沒開始滑，就有三類內容被加權。平台為什麼可能這樣設計？","第二回合中什麼方法有效？你想移除的內容有沒有再出現？","Utah Insight 影片中，Catherine 取消追蹤並封鎖帳號，仍持續收到有害影片。這個遊戲如何解釋這件事？","設計一條「安全帶」：平台可以加入什麼功能來保護青少年，而不必禁用整個 App？"]
-}};
-let L="en";
-try{const saved=localStorage.getItem("feed-lang");if(saved==="en"||saved==="zh")L=saved;else if((navigator.language||"").toLowerCase().startsWith("zh"))L="zh"}catch(e){if((navigator.language||"").toLowerCase().startsWith("zh"))L="zh"}
-const t=k=>T[L][k];
-const catLabel=k=>CATS[k][L][0],catShort=k=>CATS[k][L][1];
-const pTitle=p=>L==="zh"?p[4]:p[2],pCap=p=>L==="zh"?p[5]:p[3];
+                <button onclick="resetAnalysis()" id="reanalyzeBtn" class="hidden px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center space-x-2 border border-slate-300 shadow-xs">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span data-i18n="btnReanalyze">重新分析 / 重新上傳</span>
+                </button>
+                <button onclick="loadDemoData()" id="demoBtn" class="px-4 py-2 text-xs sm:text-sm font-medium text-pink-600 bg-pink-50 hover:bg-pink-100 rounded-xl transition-all flex items-center space-x-2 border border-pink-200 shadow-xs">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span data-i18n="btnDemo">載入示範數據</span>
+                </button>
+                <button onclick="exportReport()" id="exportBtn" disabled class="px-4 py-2 text-xs sm:text-sm font-medium text-white bg-slate-300 rounded-xl transition-all flex items-center space-x-2 cursor-not-allowed shadow-xs">
+                    <i class="fa-solid fa-download"></i>
+                    <span data-i18n="btnExport">匯出完整報告</span>
+                </button>
+            </div>
+        </div>
+    </header>
 
-const $=s=>document.querySelector(s);
-const screenEl=$("#screen"),nb=$("#notebook"),stageEl=$("#stage"),phoneContainerEl=$("#phone-container");
-const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const pct=v=>Math.round(v*100)+"%";
-let S,hiddenAt=null,toastTimer=null,curPhone=null,curNb=null;
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
 
-function fresh(){
-  S={
-    round:0,
-    n:0,
-    w:Object.fromEntries(KEYS.map(k=>[k,0])),
-    hist:[],
-    cur:null,
-    pools:{},
-    resetUsed:false,
-    globalSeen: new Set() // 👈 跨類別的全域已看過紀錄，徹底防止重複出現
-  };
-}
+        <!-- Upload & Intro Section -->
+        <section id="uploadSection" class="mb-8">
+            <div class="bg-white rounded-3xl p-8 shadow-xs border border-slate-200 text-center max-w-2xl mx-auto relative overflow-hidden">
+                <div class="absolute -right-12 -top-12 w-40 h-40 bg-pink-50 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-purple-50 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <div class="relative z-10">
+                    <div class="w-16 h-16 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+                        <i class="fa-solid fa-file-zipper"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900 mb-2" data-i18n="uploadTitle">上傳你的 Instagram 資料壓縮檔</h2>
+                    <p class="text-sm text-slate-500 mb-6" data-i18n-html="uploadDesc">支援包含 <code>posts_viewed</code>（瀏覽）、<code>liked_posts</code>（按讚）與 <code>saved_posts</code>（典藏）等 JSON 的 ZIP 檔案。</p>
 
-function draw(cat){
-  if(!POSTS[cat] || !Array.isArray(POSTS[cat])){
-    console.error(`Missing or invalid category posts for: ${cat}`);
-    return ["system", 0, "Default Title", "Default Description", "預設標題", "預設內容", "https://picsum.photos/id/101/600/800"];
-  }
+                    <label class="block w-full border-2 border-dashed border-pink-300 hover:border-pink-500 rounded-2xl p-6 cursor-pointer bg-pink-50/50 hover:bg-pink-50/80 transition-all group">
+                        <input type="file" id="zipFileInput" accept=".zip" class="hidden" onchange="handleFileUpload(event)">
+                        <div class="flex flex-col items-center space-y-2">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-pink-500 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-sm font-semibold text-slate-700" data-i18n="uploadDropTitle">點擊此處上傳 ZIP 檔案</span>
+                            <span class="text-xs text-slate-400" data-i18n="uploadPrivacyNote">完全在瀏覽器本地端運作，不會上傳伺服器，100% 保護隱私</span>
+                        </div>
+                    </label>
 
-  // 1. 找出該類別下所有尚未全域出現過的貼文索引
-  let availableIndices = POSTS[cat]
-    .map((_, i) => i)
-    .filter(i => !S.globalSeen.has(POSTS[cat][i][2]));
+                    <div id="loadingIndicator" class="hidden mt-6 flex items-center justify-center space-x-3 text-pink-600">
+                        <i class="fa-solid fa-spinner fa-spin text-lg"></i>
+                        <span class="text-sm font-medium" data-i18n="loadingText">正在解析瀏覽、按讚與典藏紀錄，請稍候...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-  // 2. 如果該類別貼文全看完，重置該類別的全域紀錄讓它可重新循環
-  if (availableIndices.length === 0) {
-    POSTS[cat].forEach(p => S.globalSeen.delete(p[2]));
-    availableIndices = POSTS[cat].map((_, i) => i);
-  }
+        <!-- Analytics Dashboard -->
+        <section id="dashboardSection" class="hidden space-y-8">
 
-  // 3. 隨機選取未看過的貼文
-  const randomIndex = Math.floor(Math.random() * availableIndices.length);
-  const chosenIndex = availableIndices[randomIndex];
-  const selectedPost = POSTS[cat][chosenIndex];
+            <!-- Data Source Mode Selector Switcher -->
+            <div class="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap gap-2 justify-center sm:justify-start">
+                <button onclick="switchMode('all')" id="btn-mode-all" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-pink-600 text-white shadow-xs">
+                    <i class="fa-solid fa-layer-group mr-1.5"></i> <span data-i18n="modeAll">全部分析 (瀏覽+按讚+典藏)</span>
+                </button>
+                <button onclick="switchMode('views')" id="btn-mode-views" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">
+                    <i class="fa-solid fa-eye mr-1.5 text-blue-500"></i> <span data-i18n="modeViews">瀏覽紀錄 (Views)</span>
+                </button>
+                <button onclick="switchMode('likes')" id="btn-mode-likes" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">
+                    <i class="fa-solid fa-heart mr-1.5 text-red-500"></i> <span data-i18n="modeLikes">按讚紀錄 (Likes)</span>
+                </button>
+                <button onclick="switchMode('saved')" id="btn-mode-saved" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">
+                    <i class="fa-solid fa-bookmark mr-1.5 text-amber-500"></i> <span data-i18n="modeSaved">典藏紀錄 (Saved)</span>
+                </button>
+            </div>
+            
+            <!-- Summary Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" data-i18n="metricTotalTitle">互動總筆數</span>
+                        <div class="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-extrabold text-slate-900" id="metricTotalViews">0</div>
+                    <p class="text-xs text-slate-400 mt-1" id="metricTotalSubtext" data-i18n="metricTotalSub">當前模式總紀錄數</p>
+                </div>
 
-  // 4. 登記為全域已出現過
-  S.globalSeen.add(selectedPost[2]);
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" data-i18n="metricUniqueTitle">獨立帳號總數</span>
+                        <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-extrabold text-slate-900" id="metricUniqueAccs">0</div>
+                    <p class="text-xs text-slate-400 mt-1" data-i18n="metricUniqueSub">互動過的創作者/粉專</p>
+                </div>
 
-  return selectedPost;
-}
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" data-i18n="metricTop10Title">Top 10 核心佔比</span>
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-extrabold text-slate-900" id="metricTop10Share">0.0%</div>
+                    <p class="text-xs text-slate-400 mt-1" data-i18n="metricTop10Sub">同溫層高度集中指標</p>
+                </div>
 
-function odds(){const testing=S.round===1&&S.n<5;const raw=KEYS.map(k=>testing?1:Math.exp(.55*S.w[k]+BOOST[k]));const sum=raw.reduce((a,b)=>a+b,0);return Object.fromEntries(KEYS.map((k,i)=>[k,raw[i]/sum]))}
-function pick(){const o=odds();let r=Math.random();for(const k of KEYS){r-=o[k];if(r<=0)return k}return KEYS[KEYS.length-1]}
-const roundHist=r=>S.hist.filter(h=>h.round===r);
-document.addEventListener("visibilitychange",()=>{if(!S||!S.cur)return;if(document.hidden)hiddenAt=performance.now();else if(hiddenAt){S.cur.hidden+=performance.now()-hiddenAt;hiddenAt=null}});
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" data-i18n="metricActionTitle">按讚與典藏轉換率</span>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fa-solid fa-fire"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-extrabold text-slate-900" id="metricActionRatio">0.0%</div>
+                    <p class="text-xs text-slate-400 mt-1" id="metricActionSubtext" data-i18n="metricActionSub">(按讚+典藏) / 總互動</p>
+                </div>
+            </div>
 
-const ICON={
-  like:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20s-7-4.4-9.2-8.6C1.2 8.2 3.2 4.5 6.8 4.5c2 0 3.4 1.1 4.2 2.4.8-1.3 2.2-2.4 4.2-2.4 3.6 0 5.6 3.7 4 6.9C19 15.6 12 20 12 20z"/></svg>',
-  replay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
-  ni:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg>'
-};
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base mb-1" data-i18n="chartPieTitle">各主題分類佔比圓餅圖</h3>
+                        <p class="text-xs text-slate-400 mb-4" data-i18n="chartPieSub">基於當前選取模式下的帳號主題分佈</p>
+                    </div>
+                    <div class="relative w-full h-72 flex items-center justify-center">
+                        <canvas id="categoryDoughnutChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base mb-1" data-i18n="chartBarTitle">Top 10 互動權重長條圖</h3>
+                        <p class="text-xs text-slate-400 mb-4" data-i18n="chartBarSub">前十大帳號的權重數量與分佈</p>
+                    </div>
+                    <div class="relative w-full h-72 flex items-center justify-center">
+                        <canvas id="topAccountsBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
-function showScreenOnly() {
-  stageEl.style.gridTemplateColumns = "minmax(300px, 400px)";
-  stageEl.style.justifyContent = "center";
-  phoneContainerEl.style.display = "block";
-  nb.style.display = "none";
-}
+            <!-- Tables Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+                    <div class="mb-4">
+                        <h3 class="font-bold text-slate-800 text-base" data-i18n="tableTop10Title">🏆 Top 10 核心互動帳號</h3>
+                        <p class="text-xs text-slate-400" data-i18n="tableTop10Sub">互動頻率最高的前十名帳號</p>
+                    </div>
+                    <div class="overflow-x-auto max-h-80">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200 sticky top-0">
+                                    <th class="py-3 px-4" data-i18n="colRank">排名</th>
+                                    <th class="py-3 px-4" data-i18n="colAccount">帳號名稱</th>
+                                    <th class="py-3 px-4 text-right" data-i18n="colWeightScore">權重計分</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topAccountsTableBody" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
 
-function showSplitStage() {
-  stageEl.style.gridTemplateColumns = "minmax(300px,380px) minmax(0,1fr)";
-  stageEl.style.justifyContent = "stretch";
-  phoneContainerEl.style.display = "block";
-  nb.style.display = "grid";
-}
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+                    <div class="mb-4">
+                        <h3 class="font-bold text-slate-800 text-base" data-i18n="tableCatTitle">📊 主題分類詳細統計</h3>
+                        <p class="text-xs text-slate-400" data-i18n="tableCatSub">各分類權重數與比例</p>
+                    </div>
+                    <div class="overflow-x-auto max-h-80">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200 sticky top-0">
+                                    <th class="py-3 px-4" data-i18n="colCategory">主題分類</th>
+                                    <th class="py-3 px-4 text-right" data-i18n="colCount">數量</th>
+                                    <th class="py-3 px-4 text-right" data-i18n="colPercent">百分比 (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoryTableBody" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-function showNotebookOnly() {
-  stageEl.style.gridTemplateColumns = "minmax(0,1fr)";
-  phoneContainerEl.style.display = "none";
-  nb.style.display = "grid";
-}
+            <!-- Search Table -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base" data-i18n="tableFullTitle">🔍 所有帳號互動明細列表</h3>
+                        <p class="text-xs text-slate-400" data-i18n="tableFullSub">包含瀏覽、按讚與典藏的詳細互動分解</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                        <div class="w-full sm:w-56">
+                            <select id="categoryFilter" onchange="filterTable()" class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-pink-500">
+                                <option value="all" data-i18n="optAllCat">所有分類 (All Categories)</option>
+                                <option value="表演類" data-i18n="catPerf">表演類</option>
+                                <option value="攝影/影像創作類" data-i18n="catPhoto">攝影/影像創作類</option>
+                                <option value="運動/健身類" data-i18n="catSport">運動/健身類</option>
+                                <option value="外貌美妝/穿搭類" data-i18n="catBeauty">外貌美妝/穿搭類</option>
+                                <option value="美食/餐飲類" data-i18n="catFood">美食/餐飲類</option>
+                                <option value="知識/學習/理財類" data-i18n="catStudy">知識/學習/理財類</option>
+                                <option value="娛樂/迷因/生活類" data-i18n="catEnt">娛樂/迷因/生活類</option>
+                                <option value="其他/綜合個人帳號" data-i18n="catOther">其他/綜合個人帳號</option>
+                            </select>
+                        </div>
+                        <div class="w-full sm:w-64">
+                            <input type="text" id="searchInput" oninput="filterTable()" data-i18n-placeholder="phSearch" placeholder="搜尋帳號關鍵字..." class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-pink-500">
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-96">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200 sticky top-0">
+                                <th class="py-3 px-4">#</th>
+                                <th class="py-3 px-4" data-i18n="colAccount">帳號名稱</th>
+                                <th class="py-3 px-4" data-i18n="colSmartCat">智慧分類</th>
+                                <th class="py-3 px-4 text-center" data-i18n="colView">瀏覽 (View)</th>
+                                <th class="py-3 px-4 text-center" data-i18n="colLike">按讚 (Like)</th>
+                                <th class="py-3 px-4 text-center" data-i18n="colSave">典藏 (Save)</th>
+                                <th class="py-3 px-4 text-right" data-i18n="colTotalWeight">總權重</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fullAccountsTableBody" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
 
-function show(phone,book){
-  if(phone){curPhone=phone;phone()}
-  if(book){curNb=book;book()}
-}
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
+        <p data-i18n="footerText">Instagram 數位足跡全方位分析器 &copy; 2026 | 支援瀏覽、按讚與典藏多維度分析</p>
+    </footer>
 
-/* ---------- Phone screens ---------- */
-function renderIntro(){
-  showScreenOnly();
-  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("r1")}</span></div>
-  <div class="ph-msg"><h2>${t("introH")}</h2><p>${t("introP")}</p><ul>${t("introL")}</ul><p>${t("introP2")}</p>
-  <div class="ph-btns"><button class="btn" id="go">${t("start")}</button><span class="kbd">${t("keys")}</span></div></div>`;
-  $("#go").onclick=startR1;
-}
+    <!-- JavaScript Application Logic -->
+    <script>
+        /* ================= 多國語言字典 (繁體中文 / English / Tiếng Việt) ================= */
+        const i18n = {
+            zh: {
+                htmlLang: "zh-Hant",
+                pageTitle: "IG瀏覽紀錄分析",
+                appTitle: "IG 全方位足跡分析",
+                appSubtitle: "瀏覽 + 按讚 + 典藏/儲存貼文 (Data Insights & Analytics)",
+                btnReanalyze: "重新分析 / 重新上傳",
+                btnDemo: "載入示範數據",
+                btnExport: "匯出完整報告",
+                uploadTitle: "上傳你的 Instagram 資料壓縮檔",
+                uploadDesc: "支援包含 <code>posts_viewed</code>（瀏覽）、<code>liked_posts</code>（按讚）與 <code>saved_posts</code>（典藏）等 JSON 的 ZIP 檔案。",
+                uploadDropTitle: "點擊此處上傳 ZIP 檔案",
+                uploadPrivacyNote: "完全在瀏覽器本地端運作，不會上傳伺服器，100% 保護隱私",
+                loadingText: "正在解析瀏覽、按讚與典藏紀錄，請稍候...",
+                modeAll: "全部分析 (瀏覽+按讚+典藏)",
+                modeViews: "瀏覽紀錄 (Views)",
+                modeLikes: "按讚紀錄 (Likes)",
+                modeSaved: "典藏紀錄 (Saved)",
+                metricTotalTitle: "互動總筆數",
+                metricTotalSub: "當前模式總紀錄數",
+                metricUniqueTitle: "獨立帳號總數",
+                metricUniqueSub: "互動過的創作者/粉專",
+                metricTop10Title: "Top 10 核心佔比",
+                metricTop10Sub: "同溫層高度集中指標",
+                metricActionTitle: "按讚與典藏轉換率",
+                metricActionSub: "(按讚+典藏) / 總互動",
+                chartPieTitle: "各主題分類佔比圓餅圖",
+                chartPieSub: "基於當前選取模式下的帳號主題分佈",
+                chartBarTitle: "Top 10 互動權重長條圖",
+                chartBarSub: "前十大帳號的權重數量與分佈",
+                tableTop10Title: "🏆 Top 10 核心互動帳號",
+                tableTop10Sub: "互動頻率最高的前十名帳號",
+                colRank: "排名",
+                colAccount: "帳號名稱",
+                colWeightScore: "權重計分",
+                tableCatTitle: "📊 主題分類詳細統計",
+                tableCatSub: "各分類權重數與比例",
+                colCategory: "主題分類",
+                colCount: "數量",
+                colPercent: "百分比 (%)",
+                tableFullTitle: "🔍 所有帳號互動明細列表",
+                tableFullSub: "包含瀏覽、按讚與典藏的詳細互動分解",
+                optAllCat: "所有分類 (All Categories)",
+                catPerf: "表演類",
+                catPhoto: "攝影/影像創作類",
+                catSport: "運動/健身類",
+                catBeauty: "外貌美妝/穿搭類",
+                catFood: "美食/餐飲類",
+                catStudy: "知識/學習/理財類",
+                catEnt: "娛樂/迷因/生活類",
+                catOther: "其他/綜合個人帳號",
+                phSearch: "搜尋帳號關鍵字...",
+                colSmartCat: "智慧分類",
+                colView: "瀏覽 (View)",
+                colLike: "按讚 (Like)",
+                colSave: "典藏 (Save)",
+                colTotalWeight: "總權重",
+                footerText: "Instagram 數位足跡全方位分析器 © 2026 | 支援瀏覽、按讚與典藏多維度分析",
+                scoreUnit: " 分",
+                alertNoValidJson: "未能從 ZIP 檔案中找到有效的瀏覽、按讚或典藏 JSON 檔案。",
+                alertZipError: "讀取 ZIP 檔案發生錯誤，請確認檔案格式。"
+            },
+            en: {
+                htmlLang: "en",
+                pageTitle: "IG Footprint & Browsing Analytics",
+                appTitle: "IG Comprehensive Footprint Analytics",
+                appSubtitle: "Views + Likes + Saved Posts (Data Insights & Analytics)",
+                btnReanalyze: "Re-analyze / Re-upload",
+                btnDemo: "Load Demo Data",
+                btnExport: "Export Full Report",
+                uploadTitle: "Upload Your Instagram Data ZIP Archive",
+                uploadDesc: "Supports ZIP archives containing JSON files such as <code>posts_viewed</code> (Views), <code>liked_posts</code> (Likes), and <code>saved_posts</code> (Saved).",
+                uploadDropTitle: "Click Here to Upload ZIP File",
+                uploadPrivacyNote: "Runs 100% locally in your browser without uploading to any server — complete privacy protection.",
+                loadingText: "Parsing viewed, liked, and saved records, please wait...",
+                modeAll: "All Analytics (Views + Likes + Saved)",
+                modeViews: "Viewed Posts (Views)",
+                modeLikes: "Liked Posts (Likes)",
+                modeSaved: "Saved Posts (Saved)",
+                metricTotalTitle: "Total Interactions",
+                metricTotalSub: "Total weighted records in current mode",
+                metricUniqueTitle: "Unique Accounts",
+                metricUniqueSub: "Creators & pages interacted with",
+                metricTop10Title: "Top 10 Core Share",
+                metricTop10Sub: "Echo chamber concentration index",
+                metricActionTitle: "Like & Save Conversion",
+                metricActionSub: "(Likes + Saved) / Total Interactions",
+                chartPieTitle: "Topic Category Distribution (Pie Chart)",
+                chartPieSub: "Account topic breakdown based on the currently selected mode",
+                chartBarTitle: "Top 10 Interaction Weights (Bar Chart)",
+                chartBarSub: "Weighted scores and distribution of your top 10 accounts",
+                tableTop10Title: "🏆 Top 10 Core Interacted Accounts",
+                tableTop10Sub: "Top 10 accounts with the highest interaction frequency",
+                colRank: "Rank",
+                colAccount: "Account",
+                colWeightScore: "Weighted Score",
+                tableCatTitle: "📊 Detailed Topic Category Statistics",
+                tableCatSub: "Weighted count and percentage per category",
+                colCategory: "Topic Category",
+                colCount: "Count",
+                colPercent: "Percentage (%)",
+                tableFullTitle: "🔍 Full Account Interaction Breakdown",
+                tableFullSub: "Detailed breakdown of views, likes, and saves per account",
+                optAllCat: "All Categories",
+                catPerf: "Performance & Cheerleading",
+                catPhoto: "Photography & Visual Arts",
+                catSport: "Sports & Fitness",
+                catBeauty: "Beauty, Makeup & Fashion",
+                catFood: "Food & Dining",
+                catStudy: "Knowledge, Learning & Finance",
+                catEnt: "Entertainment, Memes & Lifestyle",
+                catOther: "Other / General Personal Accounts",
+                phSearch: "Search account keywords...",
+                colSmartCat: "Smart Category",
+                colView: "Views",
+                colLike: "Likes",
+                colSave: "Saved",
+                colTotalWeight: "Total Weight",
+                footerText: "Instagram Comprehensive Digital Footprint Analyzer © 2026 | Multi-dimensional Views, Likes & Saved Analytics",
+                scoreUnit: " pts",
+                alertNoValidJson: "No valid viewed, liked, or saved JSON files were found in the ZIP archive.",
+                alertZipError: "An error occurred while reading the ZIP file. Please verify the file format."
+            },
+            vi: {
+                htmlLang: "vi",
+                pageTitle: "Phân tích Lịch sử & Dấu chân Instagram",
+                appTitle: "Phân tích Toàn diện Dấu chân IG",
+                appSubtitle: "Lượt xem + Lượt thích + Bài viết đã lưu (Data Insights & Analytics)",
+                btnReanalyze: "Phân tích lại / Tải lên lại",
+                btnDemo: "Tải dữ liệu mẫu",
+                btnExport: "Xuất báo cáo đầy đủ",
+                uploadTitle: "Tải lên tệp nén dữ liệu Instagram (ZIP) của bạn",
+                uploadDesc: "Hỗ trợ tệp ZIP chứa các tệp JSON như <code>posts_viewed</code> (Lượt xem), <code>liked_posts</code> (Lượt thích) và <code>saved_posts</code> (Đã lưu).",
+                uploadDropTitle: "Nhấn vào đây để tải lên tệp ZIP",
+                uploadPrivacyNote: "Hoạt động hoàn toàn cục bộ trên trình duyệt, không tải lên máy chủ, bảo mật quyền riêng tư 100%",
+                loadingText: "Đang phân tích dữ liệu lượt xem, lượt thích và bài đã lưu, vui lòng đợi...",
+                modeAll: "Phân tích tất cả (Xem + Thích + Lưu)",
+                modeViews: "Lịch sử xem (Views)",
+                modeLikes: "Lịch sử thích (Likes)",
+                modeSaved: "Lịch sử lưu (Saved)",
+                metricTotalTitle: "Tổng số tương tác",
+                metricTotalSub: "Tổng điểm bản ghi ở chế độ hiện tại",
+                metricUniqueTitle: "Tổng tài khoản duy nhất",
+                metricUniqueSub: "Nhà sáng tạo / Trang đã tương tác",
+                metricTop10Title: "Tỷ trọng Top 10 cốt lõi",
+                metricTop10Sub: "Chỉ số mức độ tập trung nội dung",
+                metricActionTitle: "Tỷ lệ chuyển đổi Thích & Lưu",
+                metricActionSub: "(Thích + Lưu) / Tổng tương tác",
+                chartPieTitle: "Biểu đồ tròn Tỷ trọng Phân loại Chủ đề",
+                chartPieSub: "Phân bố chủ đề tài khoản dựa trên chế độ đang chọn",
+                chartBarTitle: "Biểu đồ cột Trọng số Tương tác Top 10",
+                chartBarSub: "Điểm trọng số và phân bố của 10 tài khoản hàng đầu",
+                tableTop10Title: "🏆 Top 10 Tài khoản Tương tác Cốt lõi",
+                tableTop10Sub: "10 tài khoản có tần suất tương tác cao nhất",
+                colRank: "Hạng",
+                colAccount: "Tên tài khoản",
+                colWeightScore: "Điểm trọng số",
+                tableCatTitle: "📊 Thống kê Chi tiết Phân loại Chủ đề",
+                tableCatSub: "Số lượng trọng số và tỷ lệ phần trăm từng nhóm",
+                colCategory: "Phân loại chủ đề",
+                colCount: "Số lượng",
+                colPercent: "Tỷ lệ (%)",
+                tableFullTitle: "🔍 Danh sách Chi tiết Tương tác Tất cả Tài khoản",
+                tableFullSub: "Phân tích chi tiết lượt xem, lượt thích và lượt lưu của từng tài khoản",
+                optAllCat: "Tất cả phân loại (All Categories)",
+                catPerf: "Biểu diễn & Cổ vũ",
+                catPhoto: "Nhiếp ảnh & Sáng tạo hình ảnh",
+                catSport: "Thể thao & Thể hình",
+                catBeauty: "Làm đẹp, Mỹ phẩm & Thời trang",
+                catFood: "Ẩm thực & Nhà hàng",
+                catStudy: "Kiến thức, Học tập & Tài chính",
+                catEnt: "Giải trí, Meme & Đời sống",
+                catOther: "Khác / Tài khoản cá nhân tổng hợp",
+                phSearch: "Tìm kiếm từ khóa tài khoản...",
+                colSmartCat: "Phân loại thông minh",
+                colView: "Lượt xem (View)",
+                colLike: "Lượt thích (Like)",
+                colSave: "Đã lưu (Saved)",
+                colTotalWeight: "Tổng trọng số",
+                footerText: "Trình phân tích toàn diện dấu chân kỹ thuật số Instagram © 2026 | Hỗ trợ phân tích đa chiều Xem, Thích & Lưu",
+                scoreUnit: " điểm",
+                alertNoValidJson: "Không tìm thấy tệp JSON lượt xem, lượt thích hoặc bài đã lưu hợp lệ trong tệp ZIP.",
+                alertZipError: "Đã xảy ra lỗi khi đọc tệp ZIP, vui lòng kiểm tra lại định dạng tệp."
+            }
+        };
 
-function nextPost(){const cat=pick();S.cur={cat,post:draw(cat),start:performance.now(),hidden:0,liked:false,replays:0}}
+        const categoryI18nMap = {
+            '表演類': { zh: '表演類', en: 'Performance & Cheerleading', vi: 'Biểu diễn & Cổ vũ' },
+            '攝影/影像創作類': { zh: '攝影/影像創作類', en: 'Photography & Visual Arts', vi: 'Nhiếp ảnh & Sáng tạo hình ảnh' },
+            '運動/健身類': { zh: '運動/健身類', en: 'Sports & Fitness', vi: 'Thể thao & Thể hình' },
+            '外貌美妝/穿搭類': { zh: '外貌美妝/穿搭類', en: 'Beauty, Makeup & Fashion', vi: 'Làm đẹp, Mỹ phẩm & Thời trang' },
+            '美食/餐飲類': { zh: '美食/餐飲類', en: 'Food & Dining', vi: 'Ẩm thực & Nhà hàng' },
+            '知識/學習/理財類': { zh: '知識/學習/理財類', en: 'Knowledge, Learning & Finance', vi: 'Kiến thức, Học tập & Tài chính' },
+            '娛樂/迷因/生活類': { zh: '娛樂/迷因/生活類', en: 'Entertainment, Memes & Lifestyle', vi: 'Giải trí, Meme & Đời sống' },
+            '其他/綜合個人帳號': { zh: '其他/綜合個人帳號', en: 'Other / General Personal Accounts', vi: 'Khác / Tài khoản cá nhân tổng hợp' }
+        };
 
-function renderPost(){
-  showScreenOnly();
-  if(!S || !S.cur) return;
-  const c=S.cur,p=c.post,col=CATS[c.cat].color,total=S.round===1?30:20,r2=S.round===2;
-  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("postN")(S.n+1,total)}</span>${r2?`<button id="reset" ${S.resetUsed?"disabled":""}>${t("reset")}</button>`:""}</div>
-  <article class="post"><div class="post-head"><span class="avatar" style="background:${col}"></span><b>@${p[0]}</b><span class="sugg">${t("sugg")}</span></div>
-  <div class="art" id="art-img" style="--c:${col}; cursor:pointer; user-select:none; touch-action:manipulation;">
-    <img src="${p[6]}" alt="Post Image" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1;z-index:1;" />
-    <div class="prog run" id="prog" style="position:relative;z-index:2;"><i></i></div>
-    <span class="art-title" style="position:relative;z-index:2;">${pTitle(p)}</span>
-  </div>
-  <div class="actions"><button class="act" id="like" aria-pressed="${c.liked}">${ICON.like}${t("like")}</button><button class="act" id="replay">${ICON.replay}${t("replay")}</button>${r2?`<button class="act ni" id="ni">${ICON.ni}${t("ni")}</button>`:""}</div>
-  <p class="likes" id="likes">${t("likes")(p[1]+(c.liked?1:0))}</p><p class="cap"><b>${p[0]}</b> ${pCap(p)}</p></article>
-  <button class="next" id="next">${t("next")}</button>`;
-  
-  $("#like").onclick = doLike;
-  $("#replay").onclick = doReplay;
-  $("#next").onclick = () => advance(false);
-  
-  let lastTapTime = 0;
-  const artElement = $("#art-img");
-  
-  artElement.onpointerup = (e) => {
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTapTime;
-    if (tapLength < 350 && tapLength > 0) {
-      e.preventDefault();
-      if (S.cur && !S.cur.liked) {
-        doLike();
-      }
-    }
-    lastTapTime = currentTime;
-  };
+        let currentLang = 'zh';
 
-  if(r2){
-    $("#ni").onclick = () => advance(true);
-    $("#reset").onclick = doReset;
-  }
-}
+        function t(key) {
+            return (i18n[currentLang] && i18n[currentLang][key]) || i18n.zh[key] || key;
+        }
 
-function doLike(){if(!S || !S.cur) return; const c=S.cur;c.liked=!c.liked;const lBtn=$("#like"), lks=$("#likes");if(lBtn)lBtn.setAttribute("aria-pressed",c.liked);if(lks)lks.textContent=t("likes")(c.post[1]+(c.liked?1:0));curNb()}
-function doReplay(){if(!S || !S.cur) return; S.cur.replays++;const p=$("#prog");if(p){p.classList.remove("run");void p.offsetWidth;p.classList.add("run");}curNb()}
-function doReset(){S.resetUsed=true;KEYS.forEach(k=>S.w[k]=0);const rBtn=$("#reset");if(rBtn)rBtn.disabled=true;toast(t("toastReset"));curNb()}
-function toast(msg){let el=screenEl.querySelector(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");screenEl.appendChild(el)}el.textContent=msg;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.remove(),3200)}
+        function translateCategory(catKey) {
+            return (categoryI18nMap[catKey] && categoryI18nMap[catKey][currentLang]) || catKey;
+        }
 
-function advance(ni){
-  if(!S || !S.cur) return;
-  const c=S.cur;const dwell=Math.min(12,Math.max(0,(performance.now()-c.start-c.hidden)/1000));
-  let d;if(ni)d=-4;else{d=dwell<1?-.4:Math.min(dwell-1,8)*.45;if(c.liked)d+=1.6;d+=Math.min(c.replays,3)*1.2}
-  S.w[c.cat]=clamp(S.w[c.cat]+d,-6,12);
-  S.hist.push({round:S.round,cat:c.cat,post:c.post,dwell,liked:c.liked,replays:c.replays,delta:d,ni});
-  S.n++;S.cur=null;
-  if(S.round===1&&S.n>=30)return endR1();
-  if(S.round===2&&S.n>=20)return endR2();
-  nextPost();renderPost();curNb();
-}
+        function setLanguage(lang) {
+            if (!i18n[lang]) return;
+            currentLang = lang;
+            document.documentElement.lang = t('htmlLang');
+            document.title = t('pageTitle');
 
-function startR1(){fresh();S.round=1;nextPost();show(renderPost,renderLocked)}
+            ['zh', 'en', 'vi'].forEach(l => {
+                const btn = document.getElementById('lang-' + l);
+                if (btn) {
+                    if (l === lang) {
+                        btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg bg-white text-pink-600 shadow-xs transition-all";
+                    } else {
+                        btn.className = "px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all";
+                    }
+                }
+            });
 
-function renderR1End(){
-  showNotebookOnly();
-  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("r1done")}</span></div>
-  <div class="ph-msg"><h2>${t("r1doneH")}</h2><p>${t("r1doneP")}</p>
-  <div class="ph-btns"><button class="btn" id="r2">${t("toR2")}</button><button class="btn ghost" id="again">${t("againR1")}</button></div></div>`;
-  $("#r2").onclick=()=>show(renderR2Intro);$("#again").onclick=startR1;
-}
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
 
-function endR1(){show(renderR1End,renderReveal);if(window.matchMedia("(max-width:860px)").matches)nb.scrollIntoView({behavior:"smooth",block:"start"})}
+            document.querySelectorAll('[data-i18n-html]').forEach(el => {
+                const key = el.getAttribute('data-i18n-html');
+                el.innerHTML = t(key);
+            });
 
-function renderR2Intro(){
-  showScreenOnly();
-  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("r2")}</span></div>
-  <div class="ph-msg"><h2>${t("r2H")}</h2><p>${t("r2P")}</p><ul>${t("r2L")}</ul><p>${t("r2P2")}</p>
-  <div class="ph-btns"><button class="btn" id="stuck">${t("stuck")}</button><button class="btn ghost" id="mine">${t("mine")}</button></div></div>`;
-  $("#stuck").onclick=()=>startR2(true);$("#mine").onclick=()=>startR2(false);
-}
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = t(key);
+            });
 
-function startR2(stuck){
-  if(!roundHist(1).length&&!stuck){stuck=true}
-  S.hist=roundHist(1);S.round=2;S.n=0;S.resetUsed=false;
-  if(stuck)S.w={...STUCK};
-  nextPost();show(renderPost,renderEscapeLive);
-}
+            // 若儀表板已顯示，重新渲染表格與圖表以套用新語系
+            if (!document.getElementById('dashboardSection').classList.contains('hidden')) {
+                renderDashboard();
+                filterTable();
+            }
+        }
 
-function renderR2End(){
-  showNotebookOnly();
-  const g = goalState();
-  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("r2done")}</span></div>
-  <div class="ph-msg"><h2>${g.win?t("winH"):t("loseH")}</h2><p>${g.win?t("winP"):t("loseP")}</p>
-  <div class="ph-btns"><button class="btn" id="retry">${t("retry")}</button><button class="btn ghost" id="restart">${t("restart")}</button></div></div>`;
-  $("#retry").onclick=()=>show(renderR2Intro);$("#restart").onclick=resetAll;
-}
+        let aggregatedData = {}; 
+        let currentMode = 'all'; 
+        let globalProcessedList = [];
+        let doughnutChartInstance = null;
+        let barChartInstance = null;
 
-function endR2(){show(renderR2End,renderEscapeResult)}
-function resetAll(){fresh();show(renderIntro,renderLocked)}
+        const performanceKeywords = ['taishin_wonders','cheer', 'cheerleader', 'cheerleaders', 'gofans', 'girls', 'bbcrew', '啦啦隊', '應援', '女孩', '棒球女孩', 'performance', 'dance', 'dancer', 'show', 'concert', 'stage', 'artist', 'theater', 'idol', '表演', '舞蹈', '舞者', '舞台', '演唱會', '音樂會', '演出', '劇團', '樂團', '藝人', '偶像', '練習生', 'passion_sisters', 'rakutengirls', 'fubonangels', 'unigirls', 'dragon_beauties', 'wing_stars','pilots_crew'];
+        const photoKeywords = ['photos', 'photo', 'photography', 'photographer', 'lens', 'camera', 'portrait', 'snapshot', '攝影', '人像', '街拍', '快門', '底片', '底片相機', '鏡頭', '相機', '寫真', '修圖', 'vsco', 'lightroom', 'nikon', 'canon', 'sony', 'fujifilm', 'streetphoto'];
+        const sportKeywords = ['ubon_guardians','taipei_mars','tsg','sport', 'workout', 'gym', 'run', 'tennis', 'badminton', 'billiards', 'basketball', 'football', 'soccer', 'swimming', 'yoga', 'athlete','baseball', '運動', '健身', '桌球', '撞球', '羽球', '籃球', '跑步', '瑜珈', '排球', '棒球'];
+        const beautyKeywords = ['beauty', 'makeup', 'skin', 'fashion', 'outfit', 'wear', 'style', 'dress', 'fit', 'model', '穿搭', '美妝', '保養', '瘦身', '時尚', '穿著', '配件', '美甲', '髮型', 'ootd', 'cosmetics', 'skincare'];
+        const foodKeywords = ['food', 'foodie', 'eat', 'cook', 'cafe', 'bakery', 'dessert', 'yummy', '美食', '餐廳', '甜點', '吃貨', '咖啡廳', '料理', '食譜', '探店', '下午茶', 'mcdonalds', 'bistro', 'dining'];
+        const studyKeywords = ['study', 'tips', 'english', 'learn', 'news', 'tech', 'stock', 'invest', 'design', 'code', 'dev', 'flutter', 'python', 'github', '軟體', '工程', '學習', '英文', '理財', '知識', '投資', '程式', '開發', '資訊', '科技', '筆記'];
+        const entertainmentKeywords = ['new','news','dcard.tw','kaohsiung','meme', 'fun', 'humor', 'joke', 'vlog', 'daily', 'life', 'game', 'tv', 'animation', '迷因', '搞笑', '生活', '娛樂', '日常', '遊戲', '動漫', '廢文', '短片'];
 
-/* ---------- Notebook ---------- */
-function signalCount(){let n=0;for(const h of roundHist(1))n+=1+(h.liked?1:0)+h.replays;if(S && S.cur&&S.round===1)n+=(S.cur.liked?1:0)+S.cur.replays;return n}
+        const keywordDict = {
+            '表演類': performanceKeywords,
+            '攝影/影像創作類': photoKeywords,
+            '運動/健身類': sportKeywords,
+            '外貌美妝/穿搭類': beautyKeywords,
+            '美食/餐飲類': foodKeywords,
+            '知識/學習/理財類': studyKeywords,
+            '娛樂/迷因/生活類': entertainmentKeywords
+        };
 
-function renderLocked(){
-  nb.style.display = "none";
-}
+        function classifyAccount(accName) {
+            if (!accName) return '其他/綜合個人帳號';
+            const name = accName.toLowerCase();
+            let scores = {};
+            for (let [category, keywords] of Object.entries(keywordDict)) {
+                let score = 0;
+                for (let kw of keywords) {
+                    if (name.includes(kw.toLowerCase())) score += 1;
+                }
+                scores[category] = score;
+            }
 
-const esc=s=>s.replace(/"/g,"&quot;");
-function stripHTML(list,cls){return `<div class="strip ${cls||""}">${list.map(h=>`<span class="${h.ni?"ni":""}" style="background:${CATS[h.cat].color}" title="${esc(catShort(h.cat)+": "+pTitle(h.post))}"></span>`).join("")}</div>`}
-function barsHTML(o){return `<div class="bars">${KEYS.slice().sort((a,b)=>o[b]-o[a]).map(k=>`<div class="bar"><span>${catShort(k)}</span><span class="track"><i style="width:${o[k]*100}%;background:${CATS[k].color}"></i></span><span class="pct">${pct(o[k])}</span></div>`).join("")}</div>`}
-const legendHTML=()=>`<div class="legend"><span><i style="background:${CATS.look.color}"></i><i style="background:${CATS.body.color}"></i>${t("warm")}</span><span><i style="background:${CATS.friends.color}"></i><i style="background:${CATS.hobby.color}"></i>${t("cool")}</span></div>`;
-const discussHTML=()=>`<section class="discuss"><p class="sub">${t("discussT")}</p><ol>${t("discuss").map(q=>`<li>${q}</li>`).join("")}</ol></section>`;
-const types=l=>new Set(l.map(h=>h.cat)).size, comps=l=>l.filter(h=>CATS[h.cat].comp).length;
+            let bestCategory = '其他/綜合個人帳號';
+            let maxScore = 0;
+            for (let [category, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestCategory = category;
+                }
+            }
+            return bestCategory;
+        }
 
-function renderReveal(){
-  showNotebookOnly();
-  const h=roundHist(1),o=odds(),top=KEYS.slice().sort((a,b)=>o[b]-o[a])[0];
-  const first=h.slice(0,10),last=h.slice(-10);
-  const strong=h.map((x,i)=>({...x,i:i+1})).filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta).slice(0,5);
-  const total=h.reduce((a,x)=>a+x.dwell,0),likes=h.filter(x=>x.liked).length,reps=h.reduce((a,x)=>a+x.replays,0),skips=h.filter(x=>x.dwell<1).length;
-  const line=x=>[`#${x.i} ${pTitle(x.post)}`,t("paused")(x.dwell.toFixed(1)),x.liked?t("liked"):"",x.replays?t("replayed")(x.replays):""].filter(Boolean).join(" · ");
-  nb.innerHTML=`<div class="nb-head"><h2>${t("revealTitle")}</h2><span class="tag">${t("unlocked")}</span></div>
-  <p class="verdict">${t("verdict")(catLabel(top),CATS[top].color,pct(o[top]))}</p>
-  <div><p class="sub">${t("your30")}</p>${stripHTML(h)}<div class="strip-labels"><span>${t("post1")}</span><span>${t("testing")}</span><span>30</span></div>
-  <div class="compare"><div><small>${t("first10")}</small><b>${t("typesN")(types(first))}</b><small>${t("compN")(comps(first))}</small></div><div><small>${t("last10")}</small><b>${t("typesN")(types(last))}</b><small>${t("compN")(comps(last))}</small></div></div></div>
-  <div><p class="sub">${t("odds")}</p>${barsHTML(o)}</div>
-  <div><p class="sub">${t("strongest")}</p>${strong.length?`<ul class="log">${strong.map(x=>`<li><span>${line(x)}</span><span style="color:${CATS[x.cat].color}">+${x.delta.toFixed(1)} ${catShort(x.cat)}</span></li>`).join("")}</ul>`:`<p>${t("none")}</p>`}</div>
-  <div><p class="sub">${t("receipt")}</p><ul class="log"><li><span>${t("timeW")}</span><span>${t("sec")(total.toFixed(0))}</span></li><li><span>${t("likesW")}</span><span>${likes}</span></li><li><span>${t("replaysW")}</span><span>${reps}</span></li><li><span>${t("skips")}</span><span>${skips}</span></li><li><span>${t("typed")}</span><span>0</span></li></ul></div>
-  <div class="note"><p>${t("note1")}</p><p>${t("note2")}</p></div>
-  ${legendHTML()}
-  <div class="nb-btns"><button class="nb-btn" id="nbR2">${t("toR2")}</button><button class="nb-btn ghost" id="nbAgain">${t("againR1")}</button></div>
-  ${discussHTML()}`;
-  $("#nbR2").onclick=()=>show(renderR2Intro);$("#nbAgain").onclick=startR1;
-}
+        function loadDemoData() {
+            aggregatedData = {};
+            const demoViews = ['foodie_taipei', 'gourmet_hunter', '5teven___photos', 'dance_studio_tw', 'tech_news_daily', 'foodie_taipei', 'english_learning_tips', 'meme_central_tw'];
+            const demoLikes = ['foodie_taipei', '5teven___photos', 'beauty_secrets', 'outfit_inspirations', 'gym_workout_pro', 'foodie_taipei'];
+            const demoSaved = ['tech_news_daily', 'english_learning_tips', 'invest_stock_101', 'foodie_taipei', 'invest_stock_101'];
 
-function goalState(){const l=roundHist(2).slice(-10);const ty=types(l),c=comps(l);return {ty,c,win:l.length>=10&&ty>=5&&c<=3}}
-function goalHTML(g){return `<div class="goal"><div><small>${t("typesL10")}</small><br><b class="${g.ty>=5?"ok":"no"}">${g.ty}</b> <small>${t("need5")}</small></div><div><small>${t("compL10")}</small><br><b class="${g.c<=3?"ok":"no"}">${g.c}</b> <small>${t("max3")}</small></div></div>`}
+            demoViews.forEach(a => recordInteraction(a, 'view'));
+            demoLikes.forEach(a => recordInteraction(a, 'like'));
+            demoSaved.forEach(a => recordInteraction(a, 'save'));
 
-function renderEscapeLive(){
-  showSplitStage();
-  const h=roundHist(2);
-  nb.innerHTML=`<div class="nb-head"><h2>${t("liveTitle")}</h2><span class="tag">${t("live")}</span></div>
-  <p>${t("liveP")}</p>${goalHTML(goalState())}
-  <div><p class="sub">${t("soFar")}</p>${h.length?stripHTML(h,"r2"):`<p style="color:var(--muted)">${t("nothing")}</p>`}</div>
-  <div><p class="sub">${t("odds")}</p>${barsHTML(odds())}</div>${legendHTML()}`;
-}
+            renderDashboard();
+        }
 
-function renderEscapeResult(){
-  showNotebookOnly();
-  const g=goalState(),h=roundHist(2),o=odds();
-  const niN=h.filter(x=>x.ni).length,pc=h.filter(x=>!x.ni&&CATS[x.cat].comp&&x.dwell>=1).length;
-  const co=KEYS.filter(k=>CATS[k].comp).reduce((a,k)=>a+o[k],0);
-  nb.innerHTML=`<div class="nb-head"><h2>${g.win?t("winT"):t("loseT")}</h2><span class="tag">${t("result")}</span></div>
-  ${goalHTML(g)}
-  <div><p class="sub">${t("your20")}</p>${stripHTML(h,"r2")}</div>
-  <div><p class="sub">${t("did")}</p><ul class="log"><li><span>${t("niCount")}</span><span>${niN}</span></li><li><span>${t("pausedComp")}</span><span>${pc}</span></li><li><span>${t("usedReset")}</span><span>${S.resetUsed?t("yes"):t("no")}</span></li><li><span>${t("compOdds")}</span><span>${pct(co)}</span></li></ul></div>
-  <div class="note">${pc?`<p>${t("pausedNote")(pc)}</p>`:""}<p>${S.resetUsed?t("resetNote"):t("noResetNote")}</p><p>${t("catherine")}</p></div>
-  ${legendHTML()}
-  <div class="nb-btns"><button class="nb-btn" id="nbRetry">${t("retry")}</button><button class="nb-btn ghost" id="nbStart">${t("startOver")}</button></div>
-  ${discussHTML()}`;
-  $("#nbRetry").onclick=()=>show(renderR2Intro);$("#nbStart").onclick=resetAll;
-}
+        function recordInteraction(accountName, type) {
+            if (!accountName) return;
+            const cleanAcc = accountName.replace(/^@/, '').trim();
+            if (!cleanAcc) return;
 
-/* ---------- Language ---------- */
-function applyStatic(){
-  document.documentElement.lang=L==="zh"?"zh-Hant":"en";
-  ["eyebrow","h1","lede","foot"].forEach(id=>$("#"+id).textContent=t(id));
-  $("#lang-en").setAttribute("aria-pressed",L==="en");$("#lang-zh").setAttribute("aria-pressed",L==="zh");
-}
-function setLang(l){
-  if(l===L)return;L=l;try{localStorage.setItem("feed-lang",l)}catch(e){}
-  applyStatic();if(curPhone)curPhone();if(curNb)curNb();
-}
-$("#lang-en").onclick=()=>setLang("en");$("#lang-zh").onclick=()=>setLang("zh");
+            if (!aggregatedData[cleanAcc]) {
+                aggregatedData[cleanAcc] = { view: 0, like: 0, save: 0 };
+            }
+            if (aggregatedData[cleanAcc][type] !== undefined) {
+                aggregatedData[cleanAcc][type]++;
+            }
+        }
 
-document.addEventListener("keydown",e=>{
-  if(!S||!S.cur||e.target.closest("input,textarea,.lang"))return;
-  const k=e.key.toLowerCase();
-  if(k==="arrowdown"||k===" "){e.preventDefault();advance(false)}
-  else if(k==="l")doLike();else if(k==="r")doReplay();else if(k==="n"&&S.round===2)advance(true);
-});
-applyStatic();resetAll();
-</script>
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.classList.remove('hidden');
+            aggregatedData = {};
+
+            try {
+                const zip = new JSZip();
+                const zipContent = await zip.loadAsync(file);
+
+                for (let filename of Object.keys(zipContent.files)) {
+                    if (!filename.endsWith('.json')) continue;
+
+                    let type = null;
+                    if (filename.includes('posts_viewed') || filename.includes('viewed')) type = 'view';
+                    else if (filename.includes('liked_posts') || filename.includes('likes/liked')) type = 'like';
+                    else if (filename.includes('saved_posts') || filename.includes('saved')) type = 'save';
+
+                    if (type) {
+                        const fileData = await zipContent.files[filename].async('text');
+                        try {
+                            const data = JSON.parse(fileData);
+                            extractAccountsFromJSON(data, type);
+                        } catch (err) {
+                            console.error(`解析檔案 ${filename} 失敗:`, err);
+                        }
+                    }
+                }
+
+                loadingIndicator.classList.add('hidden');
+                if (Object.keys(aggregatedData).length === 0) {
+                    alert(t('alertNoValidJson'));
+                } else {
+                    renderDashboard();
+                }
+            } catch (error) {
+                loadingIndicator.classList.add('hidden');
+                console.error(error);
+                alert(t('alertZipError'));
+            }
+        }
+
+        function extractAccountsFromJSON(data, type) {
+            let items = [];
+            if (Array.isArray(data)) items = data;
+            else if (typeof data === 'object' && data !== null) {
+                for (let key in data) {
+                    if (Array.isArray(data[key])) {
+                        items = data[key];
+                        break;
+                    }
+                }
+                if (items.length === 0) items = [data];
+            }
+
+            for (let item of items) {
+                let acc = item.title || '';
+                if (!acc && item.string_list_data && item.string_list_data.length > 0) {
+                    acc = item.string_list_data[0].value || item.string_list_data[0].name || '';
+                }
+                if (!acc && item.string_map_data) {
+                    for (let subKey in item.string_map_data) {
+                        if (subKey.toLowerCase().includes('username') || item.string_map_data[subKey].value) {
+                            acc = item.string_map_data[subKey].value || '';
+                            break;
+                        }
+                    }
+                }
+                if (acc) recordInteraction(acc, type);
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            ['all', 'views', 'likes', 'saved'].forEach(m => {
+                const btn = document.getElementById(`btn-mode-${m}`);
+                if (m === mode) {
+                    btn.className = "px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-pink-600 text-white shadow-xs";
+                } else {
+                    btn.className = "px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all";
+                }
+            });
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            globalProcessedList = [];
+            let totalViews = 0, totalLikes = 0, totalSaved = 0;
+
+            for (let [acc, counts] of Object.entries(aggregatedData)) {
+                totalViews += counts.view;
+                totalLikes += counts.like;
+                totalSaved += counts.save;
+
+                let weight = 0;
+                if (currentMode === 'all') weight = counts.view + counts.like * 2 + counts.save * 3;
+                else if (currentMode === 'views') weight = counts.view;
+                else if (currentMode === 'likes') weight = counts.like;
+                else if (currentMode === 'saved') weight = counts.save;
+
+                if (weight > 0) {
+                    globalProcessedList.push({
+                        account: acc,
+                        category: classifyAccount(acc),
+                        view: counts.view,
+                        like: counts.like,
+                        save: counts.save,
+                        weight: weight
+                    });
+                }
+            }
+
+            globalProcessedList.sort((a, b) => b.weight - a.weight);
+
+            const totalInteractionCount = globalProcessedList.reduce((sum, d) => sum + d.weight, 0);
+            const uniqueAccCount = globalProcessedList.length;
+            const top10Sum = globalProcessedList.slice(0, 10).reduce((sum, d) => sum + d.weight, 0);
+            const top10Share = totalInteractionCount > 0 ? (top10Sum / totalInteractionCount) * 100 : 0;
+            const totalAllEvents = totalViews + totalLikes + totalSaved;
+            const actionRatio = totalAllEvents > 0 ? ((totalLikes + totalSaved) / totalAllEvents) * 100 : 0;
+
+            document.getElementById('metricTotalViews').innerText = totalInteractionCount.toLocaleString();
+            document.getElementById('metricUniqueAccs').innerText = uniqueAccCount.toLocaleString();
+            document.getElementById('metricTop10Share').innerText = top10Share.toFixed(1) + '%';
+            document.getElementById('metricActionRatio').innerText = actionRatio.toFixed(1) + '%';
+
+            const catCounts = {
+                '表演類': 0, '攝影/影像創作類': 0, '運動/健身類': 0,
+                '外貌美妝/穿搭類': 0, '美食/餐飲類': 0, '知識/學習/理財類': 0,
+                '娛樂/迷因/生活類': 0, '其他/綜合個人帳號': 0
+            };
+
+            globalProcessedList.forEach(d => {
+                if (catCounts[d.category] !== undefined) catCounts[d.category] += d.weight;
+                else catCounts['其他/綜合個人帳號'] += d.weight;
+            });
+
+            renderTopAccountsTable(globalProcessedList.slice(0, 10));
+            renderCategoryTable(catCounts, totalInteractionCount);
+            renderFullTable(globalProcessedList);
+            renderCharts(catCounts, globalProcessedList.slice(0, 10));
+
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('reanalyzeBtn').classList.remove('hidden');
+
+            const exportBtn = document.getElementById('exportBtn');
+            exportBtn.disabled = false;
+            exportBtn.className = 'px-4 py-2 text-xs sm:text-sm font-medium text-white ig-gradient rounded-xl transition-all flex items-center space-x-2 shadow-md hover:opacity-95';
+        }
+
+        function resetAnalysis() {
+            aggregatedData = {};
+            globalProcessedList = [];
+            document.getElementById('zipFileInput').value = '';
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('reanalyzeBtn').classList.add('hidden');
+            document.getElementById('uploadSection').classList.remove('hidden');
+
+            const exportBtn = document.getElementById('exportBtn');
+            exportBtn.disabled = true;
+            exportBtn.className = 'px-4 py-2 text-xs sm:text-sm font-medium text-white bg-slate-300 rounded-xl transition-all flex items-center space-x-2 cursor-not-allowed shadow-xs';
+        }
+
+        function renderTopAccountsTable(top10) {
+            const tbody = document.getElementById('topAccountsTableBody');
+            tbody.innerHTML = '';
+            top10.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-slate-500">#${index + 1}</td>
+                    <td class="py-3 px-4 font-medium text-slate-900">@${item.account}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-pink-600">${item.weight.toLocaleString()}${t('scoreUnit')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCategoryTable(catCounts, totalInteractionCount) {
+            const tbody = document.getElementById('categoryTableBody');
+            tbody.innerHTML = '';
+            Object.entries(catCounts).forEach(([cat, count]) => {
+                const percentage = totalInteractionCount > 0 ? ((count / totalInteractionCount) * 100).toFixed(2) : 0;
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-900 flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full inline-block shrink-0" style="background-color: ${getCategoryColor(cat)}"></span>
+                        <span>${translateCategory(cat)}</span>
+                    </td>
+                    <td class="py-3 px-4 text-right text-slate-700">${count.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-slate-900">${percentage}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderFullTable(data) {
+            const tbody = document.getElementById('fullAccountsTableBody');
+            tbody.innerHTML = '';
+            data.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-slate-400 text-xs">${index + 1}</td>
+                    <td class="py-3 px-4 font-medium text-slate-900">@${item.account}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium" style="background-color: ${getCategoryColor(item.category)}20; color: ${getCategoryColor(item.category)}">
+                            ${translateCategory(item.category)}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center font-medium text-blue-600">${item.view}</td>
+                    <td class="py-3 px-4 text-center font-medium text-red-500">${item.like}</td>
+                    <td class="py-3 px-4 text-center font-medium text-amber-500">${item.save}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-slate-700">${item.weight}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable() {
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filtered = globalProcessedList.filter(d => {
+                const matchesCategory = (selectedCategory === 'all' || d.category === selectedCategory);
+                const translatedCat = translateCategory(d.category).toLowerCase();
+                const matchesQuery = d.account.toLowerCase().includes(query) || d.category.toLowerCase().includes(query) || translatedCat.includes(query);
+                return matchesCategory && matchesQuery;
+            });
+            renderFullTable(filtered);
+        }
+
+        function getCategoryColor(category) {
+            switch(category) {
+                case '表演類': return '#ec4899';
+                case '攝影/影像創作類': return '#0284c7';
+                case '運動/健身類': return '#10b981';
+                case '外貌美妝/穿搭類': return '#e1306c';
+                case '美食/餐飲類': return '#f09433';
+                case '知識/學習/理財類': return '#4f46e5';
+                case '娛樂/迷因/生活類': return '#8b5cf6';
+                default: return '#64748b';
+            }
+        }
+
+        function renderCharts(catCounts, top10) {
+            const doughnutCtx = document.getElementById('categoryDoughnutChart').getContext('2d');
+            if (doughnutChartInstance) doughnutChartInstance.destroy();
+
+            const translatedLabels = Object.keys(catCounts).map(cat => translateCategory(cat));
+
+            doughnutChartInstance = new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: translatedLabels,
+                    datasets: [{
+                        data: Object.values(catCounts),
+                        backgroundColor: ['#ec4899', '#0284c7', '#10b981', '#e1306c', '#f09433', '#4f46e5', '#8b5cf6', '#64748b'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } } }
+                    },
+                    cutout: '65%'
+                }
+            });
+
+            const barCtx = document.getElementById('topAccountsBarChart').getContext('2d');
+            if (barChartInstance) barChartInstance.destroy();
+
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: top10.map(item => '@' + item.account),
+                    datasets: [{
+                        label: t('colWeightScore'),
+                        data: top10.map(item => item.weight),
+                        backgroundColor: '#cc2366',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 } } },
+                        y: { grid: { color: '#f1f3f5' }, ticks: { font: { family: 'Inter', size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        function exportReport() {
+            window.print();
+        }
+
+        window.setLanguage = setLanguage;
+        window.handleFileUpload = handleFileUpload;
+        window.resetAnalysis = resetAnalysis;
+        window.loadDemoData = loadDemoData;
+        window.switchMode = switchMode;
+        window.filterTable = filterTable;
+        window.exportReport = exportReport;
+    </script>
 </body>
 </html>
