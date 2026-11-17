@@ -1,920 +1,614 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IG瀏覽紀錄分析 | IG Footprint Analytics | Phân tích Dấu chân IG</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- JSZip CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- FontAwesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .ig-gradient {
-            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-        }
-        .ig-text-gradient {
-            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演算法筆記本：演算法的秘密</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#E9EDF2; --paper:#FFFFFF; --ink:#17202B; --muted:#5A6576; --line:#D2D9E2;
+  --accent:#3F33C9; --accent-ink:#FFFFFF; --rec:#E0362C; --redact:#17202B; --ok:#1F8A5B;
+  --ph-body:#0A0C11; --ph-screen:#11151D; --ph-fg:#EEF1F6; --ph-muted:#8C96A6; --ph-line:#262D3A; --ph-toast:#2A3140; --ph-like:#E6406E;
+  --f-display:"Times New Roman", DFKai-SB, BiauKai, "標楷體", serif;
+  --f-body:"Times New Roman", DFKai-SB, BiauKai, "標楷體", serif;
+  --f-mono:"Times New Roman", DFKai-SB, BiauKai, "標楷體", monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1218; --paper:#171C25; --ink:#E6EAF1; --muted:#97A2B2; --line:#2A3240;
+  --accent:#8E86FF; --accent-ink:#0E1218; --rec:#FF5A4F; --redact:#C9D0DB; --ok:#4CC38A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1218; --paper:#171C25; --ink:#E6EAF1; --muted:#97A2B2; --line:#2A3240;
+  --accent:#8E86FF; --accent-ink:#0E1218; --rec:#FF5A4F; --redact:#C9D0DB; --ok:#4CC38A; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body);margin:0}
+.page{max-width:1120px;margin:0 auto;padding-block:32px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:grid;gap:28px}
+.mast{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px}
+.mast > div{min-width:0;flex:1 1 420px}
+.eyebrow{margin:0;font:500 12px/1.4 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{margin:6px 0 10px;font:800 clamp(34px,6vw,60px)/1.05 var(--f-display);letter-spacing:-.02em;text-wrap:balance}
+html[lang="zh-Hant"] h1{letter-spacing:.02em;font-weight:900}
+.lede{margin:0;max-width:62ch;color:var(--muted);font-size:17px}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--paper);padding:3px;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);font:600 13px var(--f-body);padding:6px 14px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.stage{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:minmax(0,1fr)}.phone{max-width:400px;width:100%;margin:0 auto}}
+
+.phone{background:var(--ph-body);border-radius:38px;padding:12px;box-shadow:0 18px 40px -18px rgba(10,12,20,.55)}
+.screen{background:var(--ph-screen);color:var(--ph-fg);border-radius:28px;min-height:660px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.feedbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px 10px;border-bottom:1px solid var(--ph-line);font:500 12px var(--f-mono);color:var(--ph-muted)}
+.feedbar .app{font:800 18px var(--f-display);color:var(--ph-fg);letter-spacing:-.01em}
+.feedbar button{font:500 11px var(--f-mono);color:var(--ph-fg);background:transparent;border:1px solid var(--ph-line);border-radius:999px;padding:4px 10px;cursor:pointer}
+.feedbar button:disabled{opacity:.4;cursor:default}
+.post{display:flex;flex-direction:column;gap:10px;padding:12px 14px 0}
+.post-head{display:flex;align-items:center;gap:8px;font-size:14px}
+.avatar{width:28px;height:28px;border-radius:50%;flex:none;border:2px solid var(--ph-screen);box-shadow:0 0 0 1.5px var(--ph-line)}
+.sugg{margin-left:auto;font:400 11px var(--f-mono);color:var(--ph-muted)}
+.art{position:relative;aspect-ratio:4/5;max-width:100%;border-radius:14px;overflow:hidden;display:flex;align-items:flex-end;padding:18px;background:var(--c);}
+.art-title{font:800 clamp(24px,7vw,32px)/1.12 var(--f-display);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.9);text-wrap:balance;position:relative;z-index:2;}
+.prog{position:absolute;top:10px;left:12px;right:12px;height:3px;border-radius:2px;background:rgba(255,255,255,.28);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:#fff}
+.prog.run i{animation:fill 5s linear forwards}
+@keyframes fill{to{width:100%}}
+.actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.act{display:inline-flex;align-items:center;gap:6px;background:transparent;color:var(--ph-fg);border:1px solid var(--ph-line);border-radius:999px;padding:7px 12px;font:500 13px var(--f-body);cursor:pointer}
+.act svg{width:18px;height:18px}
+.act[aria-pressed="true"]{background:var(--ph-like);border-color:var(--ph-like);color:#fff}
+.act.ni{margin-left:auto;border-style:dashed}
+.likes{margin:0;font:600 13px var(--f-body)}
+.cap{margin:0;font-size:13px;color:var(--ph-muted)}
+.cap b{color:var(--ph-fg)}
+.next{margin:auto 14px 14px;background:var(--ph-fg);color:var(--ph-screen);border:0;border-radius:14px;padding:13px;font:600 15px var(--f-body);cursor:pointer}
+.ph-msg{flex:1;display:flex;flex-direction:column;gap:14px;padding:26px 22px 22px}
+.ph-msg h2{margin:0;font:800 30px/1.15 var(--f-display);text-wrap:balance}
+.ph-msg p{margin:0;color:var(--ph-muted);font-size:15px}
+.ph-msg p b{color:var(--ph-fg)}
+.ph-msg ul{margin:0;padding-left:18px;color:var(--ph-muted);font-size:14px;display:grid;gap:6px}
+.ph-msg ul b{color:var(--ph-fg)}
+.ph-btns{margin-top:auto;display:grid;gap:10px}
+.btn{border:0;border-radius:14px;padding:13px 14px;font:600 15px var(--f-body);cursor:pointer;background:var(--ph-fg);color:var(--ph-screen)}
+.btn.ghost{background:transparent;color:var(--ph-fg);border:1px solid var(--ph-line)}
+.toast{position:absolute;left:14px;right:14px;bottom:76px;background:var(--ph-toast);color:var(--ph-fg);font-size:13px;padding:10px 12px;border-radius:10px}
+.kbd{font:400 12px var(--f-mono);color:var(--ph-muted)}
+
+.notebook{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:24px clamp(16px,3vw,32px) 28px;min-width:0;
+  background-image:linear-gradient(color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--line) 55%,transparent) 1px,transparent 1px);
+  background-size:22px 22px;display:grid;gap:22px}
+.nb-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+.nb-head h2{margin:0;font:800 26px/1.15 var(--f-display);letter-spacing:-.01em}
+.tag{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);background:var(--paper);padding:3px 8px;border-radius:4px}
+.rec{display:inline-flex;align-items:center;gap:6px;color:var(--rec);border-color:color-mix(in srgb,var(--rec) 40%,var(--line))}
+.rec::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--rec);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.nb p{margin:0}
+.sub{margin:0 0 10px;font:500 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.big{font:800 56px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.sigrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.redact{display:grid;gap:8px}
+.redact div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center}
+.redact span{height:12px;background:var(--redact);border-radius:2px}
+.redact i{height:12px;background:var(--redact);opacity:.85;border-radius:2px;transition:width .5s ease}
+.verdict{font:600 clamp(20px,2.6vw,26px)/1.35 var(--f-body);text-wrap:balance}
+.verdict b{font-family:var(--f-display);font-weight:800}
+.strip{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px}
+.strip.r2{grid-template-columns:repeat(20,minmax(0,1fr))}
+.strip span{aspect-ratio:1/2;border-radius:2px;max-width:100%}
+.strip span.ni{outline:2px solid var(--ink);outline-offset:-2px;opacity:.45}
+.strip-labels{display:flex;justify-content:space-between;gap:8px;font:400 12px var(--f-mono);color:var(--muted);margin-top:6px}
+.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.compare div{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:10px 12px}
+.compare b{display:block;font:800 22px var(--f-display);font-variant-numeric:tabular-nums}
+.compare small{color:var(--muted);font-size:13px}
+.bars{display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13px}
+.bar .track{height:12px;background:color-mix(in srgb,var(--line) 70%,transparent);border-radius:2px;overflow:hidden}
+.bar .track i{display:block;height:100%;border-radius:2px;transition:width .5s ease}
+.bar .pct{font:500 12px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.log{margin:0;padding:0;list-style:none;display:grid;gap:6px;font:400 13px/1.45 var(--f-mono)}
+.log li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.log li span:first-child{min-width:0}
+.log li span:last-child{white-space:nowrap;font-weight:500}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.note{border-left:3px solid var(--accent);padding:4px 0 4px 14px;color:var(--ink)}
+.note p+p{margin-top:8px}
+.goal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.goal div{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:12px}
+.goal b{font:800 30px var(--f-display);font-variant-numeric:tabular-nums}
+.goal small{color:var(--muted)}
+.goal .ok{color:var(--ok)}.goal .no{color:var(--rec)}
+.discuss{border-top:2px solid var(--ink);padding-top:16px}
+.discuss ol{margin:0;padding-left:22px;display:grid;gap:8px}
+.nb-btns{display:flex;flex-wrap:wrap;gap:10px}
+.nb-btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:10px 16px;font:600 14px var(--f-body);cursor:pointer}
+.nb-btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+footer{font-size:13px;color:var(--muted);max-width:75ch}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (max-width:480px){.bar{grid-template-columns:90px minmax(0,1fr) 40px}.redact div{grid-template-columns:80px minmax(0,1fr)}.compare,.goal{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.prog.run i{animation:none;width:100%}.rec::before{animation:none}.bar .track i,.redact i{transition:none}}
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
-
-    <!-- Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-2 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl ig-gradient flex items-center justify-center text-white shadow-md shrink-0">
-                    <i class="fa-brands fa-instagram text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight ig-text-gradient" data-i18n="appTitle">IG 全方位足跡分析</h1>
-                    <p class="text-xs text-slate-500" data-i18n="appSubtitle">瀏覽 + 按讚 + 典藏/儲存貼文 (Data Insights & Analytics)</p>
-                </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <!-- Language Switcher -->
-                <div class="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200" role="group" aria-label="Language Switcher">
-                    <button type="button" onclick="setLanguage('zh')" id="lang-zh" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-white text-pink-600 shadow-xs transition-all">中文</button>
-                    <button type="button" onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all">EN</button>
-                    <button type="button" onclick="setLanguage('vi')" id="lang-vi" class="px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all">Tiếng Việt</button>
-                </div>
-
-                <button onclick="resetAnalysis()" id="reanalyzeBtn" class="hidden px-4 py-2 text-xs sm:text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center space-x-2 border border-slate-300 shadow-xs">
-                    <i class="fa-solid fa-rotate-right"></i>
-                    <span data-i18n="btnReanalyze">重新分析 / 重新上傳</span>
-                </button>
-                <button onclick="loadDemoData()" id="demoBtn" class="px-4 py-2 text-xs sm:text-sm font-medium text-pink-600 bg-pink-50 hover:bg-pink-100 rounded-xl transition-all flex items-center space-x-2 border border-pink-200 shadow-xs">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span data-i18n="btnDemo">載入示範數據</span>
-                </button>
-                <button onclick="exportReport()" id="exportBtn" disabled class="px-4 py-2 text-xs sm:text-sm font-medium text-white bg-slate-300 rounded-xl transition-all flex items-center space-x-2 cursor-not-allowed shadow-xs">
-                    <i class="fa-solid fa-download"></i>
-                    <span data-i18n="btnExport">匯出完整報告</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
-
-        <!-- Upload & Intro Section -->
-        <section id="uploadSection" class="mb-8">
-            <div class="bg-white rounded-3xl p-8 shadow-xs border border-slate-200 text-center max-w-2xl mx-auto relative overflow-hidden">
-                <div class="absolute -right-12 -top-12 w-40 h-40 bg-pink-50 rounded-full blur-2xl pointer-events-none"></div>
-                <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-purple-50 rounded-full blur-2xl pointer-events-none"></div>
-                
-                <div class="relative z-10">
-                    <div class="w-16 h-16 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-                        <i class="fa-solid fa-file-zipper"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-slate-900 mb-2" data-i18n="uploadTitle">上傳你的 Instagram 資料壓縮檔</h2>
-                    <p class="text-sm text-slate-500 mb-6" data-i18n-html="uploadDesc">支援包含 <code>posts_viewed</code>（瀏覽）、<code>liked_posts</code>（按讚）與 <code>saved_posts</code>（典藏）等 JSON 的 ZIP 檔案。</p>
-
-                    <label class="block w-full border-2 border-dashed border-pink-300 hover:border-pink-500 rounded-2xl p-6 cursor-pointer bg-pink-50/50 hover:bg-pink-50/80 transition-all group">
-                        <input type="file" id="zipFileInput" accept=".zip" class="hidden" onchange="handleFileUpload(event)">
-                        <div class="flex flex-col items-center space-y-2">
-                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-pink-500 group-hover:scale-110 transition-transform"></i>
-                            <span class="text-sm font-semibold text-slate-700" data-i18n="uploadDropTitle">點擊此處上傳 ZIP 檔案</span>
-                            <span class="text-xs text-slate-400" data-i18n="uploadPrivacyNote">完全在瀏覽器本地端運作，不會上傳伺服器，100% 保護隱私</span>
-                        </div>
-                    </label>
-
-                    <div id="loadingIndicator" class="hidden mt-6 flex items-center justify-center space-x-3 text-pink-600">
-                        <i class="fa-solid fa-spinner fa-spin text-lg"></i>
-                        <span class="text-sm font-medium" data-i18n="loadingText">正在解析瀏覽、按讚與典藏紀錄，請稍候...</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Analytics Dashboard -->
-        <section id="dashboardSection" class="hidden space-y-8">
-
-            <!-- Data Source Mode Selector Switcher -->
-            <div class="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap gap-2 justify-center sm:justify-start">
-                <button onclick="switchMode('all')" id="btn-mode-all" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-pink-600 text-white shadow-xs">
-                    <i class="fa-solid fa-layer-group mr-1.5"></i> <span data-i18n="modeAll">全部分析 (瀏覽+按讚+典藏)</span>
-                </button>
-                <button onclick="switchMode('views')" id="btn-mode-views" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">
-                    <i class="fa-solid fa-eye mr-1.5 text-blue-500"></i> <span data-i18n="modeViews">瀏覽紀錄 (Views)</span>
-                </button>
-                <button onclick="switchMode('likes')" id="btn-mode-likes" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">
-                    <i class="fa-solid fa-heart mr-1.5 text-red-500"></i> <span data-i18n="modeLikes">按讚紀錄 (Likes)</span>
-                </button>
-                <button onclick="switchMode('saved')" id="btn-mode-saved" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">
-                    <i class="fa-solid fa-bookmark mr-1.5 text-amber-500"></i> <span data-i18n="modeSaved">典藏紀錄 (Saved)</span>
-                </button>
-            </div>
-            
-            <!-- Summary Metric Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" data-i18n="metricTotalTitle">互動總筆數</span>
-                        <div class="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center">
-                            <i class="fa-solid fa-chart-line"></i>
-                        </div>
-                    </div>
-                    <div class="text-2xl font-extrabold text-slate-900" id="metricTotalViews">0</div>
-                    <p class="text-xs text-slate-400 mt-1" id="metricTotalSubtext" data-i18n="metricTotalSub">當前模式總紀錄數</p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" data-i18n="metricUniqueTitle">獨立帳號總數</span>
-                        <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                            <i class="fa-solid fa-users"></i>
-                        </div>
-                    </div>
-                    <div class="text-2xl font-extrabold text-slate-900" id="metricUniqueAccs">0</div>
-                    <p class="text-xs text-slate-400 mt-1" data-i18n="metricUniqueSub">互動過的創作者/粉專</p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" data-i18n="metricTop10Title">Top 10 核心佔比</span>
-                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                            <i class="fa-solid fa-bullseye"></i>
-                        </div>
-                    </div>
-                    <div class="text-2xl font-extrabold text-slate-900" id="metricTop10Share">0.0%</div>
-                    <p class="text-xs text-slate-400 mt-1" data-i18n="metricTop10Sub">同溫層高度集中指標</p>
-                </div>
-
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" data-i18n="metricActionTitle">按讚與典藏轉換率</span>
-                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                            <i class="fa-solid fa-fire"></i>
-                        </div>
-                    </div>
-                    <div class="text-2xl font-extrabold text-slate-900" id="metricActionRatio">0.0%</div>
-                    <p class="text-xs text-slate-400 mt-1" id="metricActionSubtext" data-i18n="metricActionSub">(按讚+典藏) / 總互動</p>
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base mb-1" data-i18n="chartPieTitle">各主題分類佔比圓餅圖</h3>
-                        <p class="text-xs text-slate-400 mb-4" data-i18n="chartPieSub">基於當前選取模式下的帳號主題分佈</p>
-                    </div>
-                    <div class="relative w-full h-72 flex items-center justify-center">
-                        <canvas id="categoryDoughnutChart"></canvas>
-                    </div>
-                </div>
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base mb-1" data-i18n="chartBarTitle">Top 10 互動權重長條圖</h3>
-                        <p class="text-xs text-slate-400 mb-4" data-i18n="chartBarSub">前十大帳號的權重數量與分佈</p>
-                    </div>
-                    <div class="relative w-full h-72 flex items-center justify-center">
-                        <canvas id="topAccountsBarChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tables Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-                    <div class="mb-4">
-                        <h3 class="font-bold text-slate-800 text-base" data-i18n="tableTop10Title">🏆 Top 10 核心互動帳號</h3>
-                        <p class="text-xs text-slate-400" data-i18n="tableTop10Sub">互動頻率最高的前十名帳號</p>
-                    </div>
-                    <div class="overflow-x-auto max-h-80">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200 sticky top-0">
-                                    <th class="py-3 px-4" data-i18n="colRank">排名</th>
-                                    <th class="py-3 px-4" data-i18n="colAccount">帳號名稱</th>
-                                    <th class="py-3 px-4 text-right" data-i18n="colWeightScore">權重計分</th>
-                                </tr>
-                            </thead>
-                            <tbody id="topAccountsTableBody" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-                    <div class="mb-4">
-                        <h3 class="font-bold text-slate-800 text-base" data-i18n="tableCatTitle">📊 主題分類詳細統計</h3>
-                        <p class="text-xs text-slate-400" data-i18n="tableCatSub">各分類權重數與比例</p>
-                    </div>
-                    <div class="overflow-x-auto max-h-80">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200 sticky top-0">
-                                    <th class="py-3 px-4" data-i18n="colCategory">主題分類</th>
-                                    <th class="py-3 px-4 text-right" data-i18n="colCount">數量</th>
-                                    <th class="py-3 px-4 text-right" data-i18n="colPercent">百分比 (%)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="categoryTableBody" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Search Table -->
-            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base" data-i18n="tableFullTitle">🔍 所有帳號互動明細列表</h3>
-                        <p class="text-xs text-slate-400" data-i18n="tableFullSub">包含瀏覽、按讚與典藏的詳細互動分解</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                        <div class="w-full sm:w-56">
-                            <select id="categoryFilter" onchange="filterTable()" class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-pink-500">
-                                <option value="all" data-i18n="optAllCat">所有分類 (All Categories)</option>
-                                <option value="表演類" data-i18n="catPerf">表演類</option>
-                                <option value="攝影/影像創作類" data-i18n="catPhoto">攝影/影像創作類</option>
-                                <option value="運動/健身類" data-i18n="catSport">運動/健身類</option>
-                                <option value="外貌美妝/穿搭類" data-i18n="catBeauty">外貌美妝/穿搭類</option>
-                                <option value="美食/餐飲類" data-i18n="catFood">美食/餐飲類</option>
-                                <option value="知識/學習/理財類" data-i18n="catStudy">知識/學習/理財類</option>
-                                <option value="娛樂/迷因/生活類" data-i18n="catEnt">娛樂/迷因/生活類</option>
-                                <option value="其他/綜合個人帳號" data-i18n="catOther">其他/綜合個人帳號</option>
-                            </select>
-                        </div>
-                        <div class="w-full sm:w-64">
-                            <input type="text" id="searchInput" oninput="filterTable()" data-i18n-placeholder="phSearch" placeholder="搜尋帳號關鍵字..." class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-pink-500">
-                        </div>
-                    </div>
-                </div>
-                <div class="overflow-x-auto max-h-96">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200 sticky top-0">
-                                <th class="py-3 px-4">#</th>
-                                <th class="py-3 px-4" data-i18n="colAccount">帳號名稱</th>
-                                <th class="py-3 px-4" data-i18n="colSmartCat">智慧分類</th>
-                                <th class="py-3 px-4 text-center" data-i18n="colView">瀏覽 (View)</th>
-                                <th class="py-3 px-4 text-center" data-i18n="colLike">按讚 (Like)</th>
-                                <th class="py-3 px-4 text-center" data-i18n="colSave">典藏 (Save)</th>
-                                <th class="py-3 px-4 text-right" data-i18n="colTotalWeight">總權重</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fullAccountsTableBody" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
-        <p data-i18n="footerText">Instagram 數位足跡全方位分析器 &copy; 2026 | 支援瀏覽、按讚與典藏多維度分析</p>
-    </footer>
-
-    <!-- JavaScript Application Logic -->
-    <script>
-        /* ================= 多國語言字典 (繁體中文 / English / Tiếng Việt) ================= */
-        const i18n = {
-            zh: {
-                htmlLang: "zh-Hant",
-                pageTitle: "IG瀏覽紀錄分析",
-                appTitle: "IG 全方位足跡分析",
-                appSubtitle: "瀏覽 + 按讚 + 典藏/儲存貼文 (Data Insights & Analytics)",
-                btnReanalyze: "重新分析 / 重新上傳",
-                btnDemo: "載入示範數據",
-                btnExport: "匯出完整報告",
-                uploadTitle: "上傳你的 Instagram 資料壓縮檔",
-                uploadDesc: "支援包含 <code>posts_viewed</code>（瀏覽）、<code>liked_posts</code>（按讚）與 <code>saved_posts</code>（典藏）等 JSON 的 ZIP 檔案。",
-                uploadDropTitle: "點擊此處上傳 ZIP 檔案",
-                uploadPrivacyNote: "完全在瀏覽器本地端運作，不會上傳伺服器，100% 保護隱私",
-                loadingText: "正在解析瀏覽、按讚與典藏紀錄，請稍候...",
-                modeAll: "全部分析 (瀏覽+按讚+典藏)",
-                modeViews: "瀏覽紀錄 (Views)",
-                modeLikes: "按讚紀錄 (Likes)",
-                modeSaved: "典藏紀錄 (Saved)",
-                metricTotalTitle: "互動總筆數",
-                metricTotalSub: "當前模式總紀錄數",
-                metricUniqueTitle: "獨立帳號總數",
-                metricUniqueSub: "互動過的創作者/粉專",
-                metricTop10Title: "Top 10 核心佔比",
-                metricTop10Sub: "同溫層高度集中指標",
-                metricActionTitle: "按讚與典藏轉換率",
-                metricActionSub: "(按讚+典藏) / 總互動",
-                chartPieTitle: "各主題分類佔比圓餅圖",
-                chartPieSub: "基於當前選取模式下的帳號主題分佈",
-                chartBarTitle: "Top 10 互動權重長條圖",
-                chartBarSub: "前十大帳號的權重數量與分佈",
-                tableTop10Title: "🏆 Top 10 核心互動帳號",
-                tableTop10Sub: "互動頻率最高的前十名帳號",
-                colRank: "排名",
-                colAccount: "帳號名稱",
-                colWeightScore: "權重計分",
-                tableCatTitle: "📊 主題分類詳細統計",
-                tableCatSub: "各分類權重數與比例",
-                colCategory: "主題分類",
-                colCount: "數量",
-                colPercent: "百分比 (%)",
-                tableFullTitle: "🔍 所有帳號互動明細列表",
-                tableFullSub: "包含瀏覽、按讚與典藏的詳細互動分解",
-                optAllCat: "所有分類 (All Categories)",
-                catPerf: "表演類",
-                catPhoto: "攝影/影像創作類",
-                catSport: "運動/健身類",
-                catBeauty: "外貌美妝/穿搭類",
-                catFood: "美食/餐飲類",
-                catStudy: "知識/學習/理財類",
-                catEnt: "娛樂/迷因/生活類",
-                catOther: "其他/綜合個人帳號",
-                phSearch: "搜尋帳號關鍵字...",
-                colSmartCat: "智慧分類",
-                colView: "瀏覽 (View)",
-                colLike: "按讚 (Like)",
-                colSave: "典藏 (Save)",
-                colTotalWeight: "總權重",
-                footerText: "Instagram 數位足跡全方位分析器 © 2026 | 支援瀏覽、按讚與典藏多維度分析",
-                scoreUnit: " 分",
-                alertNoValidJson: "未能從 ZIP 檔案中找到有效的瀏覽、按讚或典藏 JSON 檔案。",
-                alertZipError: "讀取 ZIP 檔案發生錯誤，請確認檔案格式。"
-            },
-            en: {
-                htmlLang: "en",
-                pageTitle: "IG Footprint & Browsing Analytics",
-                appTitle: "IG Comprehensive Footprint Analytics",
-                appSubtitle: "Views + Likes + Saved Posts (Data Insights & Analytics)",
-                btnReanalyze: "Re-analyze / Re-upload",
-                btnDemo: "Load Demo Data",
-                btnExport: "Export Full Report",
-                uploadTitle: "Upload Your Instagram Data ZIP Archive",
-                uploadDesc: "Supports ZIP archives containing JSON files such as <code>posts_viewed</code> (Views), <code>liked_posts</code> (Likes), and <code>saved_posts</code> (Saved).",
-                uploadDropTitle: "Click Here to Upload ZIP File",
-                uploadPrivacyNote: "Runs 100% locally in your browser without uploading to any server — complete privacy protection.",
-                loadingText: "Parsing viewed, liked, and saved records, please wait...",
-                modeAll: "All Analytics (Views + Likes + Saved)",
-                modeViews: "Viewed Posts (Views)",
-                modeLikes: "Liked Posts (Likes)",
-                modeSaved: "Saved Posts (Saved)",
-                metricTotalTitle: "Total Interactions",
-                metricTotalSub: "Total weighted records in current mode",
-                metricUniqueTitle: "Unique Accounts",
-                metricUniqueSub: "Creators & pages interacted with",
-                metricTop10Title: "Top 10 Core Share",
-                metricTop10Sub: "Echo chamber concentration index",
-                metricActionTitle: "Like & Save Conversion",
-                metricActionSub: "(Likes + Saved) / Total Interactions",
-                chartPieTitle: "Topic Category Distribution (Pie Chart)",
-                chartPieSub: "Account topic breakdown based on the currently selected mode",
-                chartBarTitle: "Top 10 Interaction Weights (Bar Chart)",
-                chartBarSub: "Weighted scores and distribution of your top 10 accounts",
-                tableTop10Title: "🏆 Top 10 Core Interacted Accounts",
-                tableTop10Sub: "Top 10 accounts with the highest interaction frequency",
-                colRank: "Rank",
-                colAccount: "Account",
-                colWeightScore: "Weighted Score",
-                tableCatTitle: "📊 Detailed Topic Category Statistics",
-                tableCatSub: "Weighted count and percentage per category",
-                colCategory: "Topic Category",
-                colCount: "Count",
-                colPercent: "Percentage (%)",
-                tableFullTitle: "🔍 Full Account Interaction Breakdown",
-                tableFullSub: "Detailed breakdown of views, likes, and saves per account",
-                optAllCat: "All Categories",
-                catPerf: "Performance & Cheerleading",
-                catPhoto: "Photography & Visual Arts",
-                catSport: "Sports & Fitness",
-                catBeauty: "Beauty, Makeup & Fashion",
-                catFood: "Food & Dining",
-                catStudy: "Knowledge, Learning & Finance",
-                catEnt: "Entertainment, Memes & Lifestyle",
-                catOther: "Other / General Personal Accounts",
-                phSearch: "Search account keywords...",
-                colSmartCat: "Smart Category",
-                colView: "Views",
-                colLike: "Likes",
-                colSave: "Saved",
-                colTotalWeight: "Total Weight",
-                footerText: "Instagram Comprehensive Digital Footprint Analyzer © 2026 | Multi-dimensional Views, Likes & Saved Analytics",
-                scoreUnit: " pts",
-                alertNoValidJson: "No valid viewed, liked, or saved JSON files were found in the ZIP archive.",
-                alertZipError: "An error occurred while reading the ZIP file. Please verify the file format."
-            },
-            vi: {
-                htmlLang: "vi",
-                pageTitle: "Phân tích Lịch sử & Dấu chân Instagram",
-                appTitle: "Phân tích Toàn diện Dấu chân IG",
-                appSubtitle: "Lượt xem + Lượt thích + Bài viết đã lưu (Data Insights & Analytics)",
-                btnReanalyze: "Phân tích lại / Tải lên lại",
-                btnDemo: "Tải dữ liệu mẫu",
-                btnExport: "Xuất báo cáo đầy đủ",
-                uploadTitle: "Tải lên tệp nén dữ liệu Instagram (ZIP) của bạn",
-                uploadDesc: "Hỗ trợ tệp ZIP chứa các tệp JSON như <code>posts_viewed</code> (Lượt xem), <code>liked_posts</code> (Lượt thích) và <code>saved_posts</code> (Đã lưu).",
-                uploadDropTitle: "Nhấn vào đây để tải lên tệp ZIP",
-                uploadPrivacyNote: "Hoạt động hoàn toàn cục bộ trên trình duyệt, không tải lên máy chủ, bảo mật quyền riêng tư 100%",
-                loadingText: "Đang phân tích dữ liệu lượt xem, lượt thích và bài đã lưu, vui lòng đợi...",
-                modeAll: "Phân tích tất cả (Xem + Thích + Lưu)",
-                modeViews: "Lịch sử xem (Views)",
-                modeLikes: "Lịch sử thích (Likes)",
-                modeSaved: "Lịch sử lưu (Saved)",
-                metricTotalTitle: "Tổng số tương tác",
-                metricTotalSub: "Tổng điểm bản ghi ở chế độ hiện tại",
-                metricUniqueTitle: "Tổng tài khoản duy nhất",
-                metricUniqueSub: "Nhà sáng tạo / Trang đã tương tác",
-                metricTop10Title: "Tỷ trọng Top 10 cốt lõi",
-                metricTop10Sub: "Chỉ số mức độ tập trung nội dung",
-                metricActionTitle: "Tỷ lệ chuyển đổi Thích & Lưu",
-                metricActionSub: "(Thích + Lưu) / Tổng tương tác",
-                chartPieTitle: "Biểu đồ tròn Tỷ trọng Phân loại Chủ đề",
-                chartPieSub: "Phân bố chủ đề tài khoản dựa trên chế độ đang chọn",
-                chartBarTitle: "Biểu đồ cột Trọng số Tương tác Top 10",
-                chartBarSub: "Điểm trọng số và phân bố của 10 tài khoản hàng đầu",
-                tableTop10Title: "🏆 Top 10 Tài khoản Tương tác Cốt lõi",
-                tableTop10Sub: "10 tài khoản có tần suất tương tác cao nhất",
-                colRank: "Hạng",
-                colAccount: "Tên tài khoản",
-                colWeightScore: "Điểm trọng số",
-                tableCatTitle: "📊 Thống kê Chi tiết Phân loại Chủ đề",
-                tableCatSub: "Số lượng trọng số và tỷ lệ phần trăm từng nhóm",
-                colCategory: "Phân loại chủ đề",
-                colCount: "Số lượng",
-                colPercent: "Tỷ lệ (%)",
-                tableFullTitle: "🔍 Danh sách Chi tiết Tương tác Tất cả Tài khoản",
-                tableFullSub: "Phân tích chi tiết lượt xem, lượt thích và lượt lưu của từng tài khoản",
-                optAllCat: "Tất cả phân loại (All Categories)",
-                catPerf: "Biểu diễn & Cổ vũ",
-                catPhoto: "Nhiếp ảnh & Sáng tạo hình ảnh",
-                catSport: "Thể thao & Thể hình",
-                catBeauty: "Làm đẹp, Mỹ phẩm & Thời trang",
-                catFood: "Ẩm thực & Nhà hàng",
-                catStudy: "Kiến thức, Học tập & Tài chính",
-                catEnt: "Giải trí, Meme & Đời sống",
-                catOther: "Khác / Tài khoản cá nhân tổng hợp",
-                phSearch: "Tìm kiếm từ khóa tài khoản...",
-                colSmartCat: "Phân loại thông minh",
-                colView: "Lượt xem (View)",
-                colLike: "Lượt thích (Like)",
-                colSave: "Đã lưu (Saved)",
-                colTotalWeight: "Tổng trọng số",
-                footerText: "Trình phân tích toàn diện dấu chân kỹ thuật số Instagram © 2026 | Hỗ trợ phân tích đa chiều Xem, Thích & Lưu",
-                scoreUnit: " điểm",
-                alertNoValidJson: "Không tìm thấy tệp JSON lượt xem, lượt thích hoặc bài đã lưu hợp lệ trong tệp ZIP.",
-                alertZipError: "Đã xảy ra lỗi khi đọc tệp ZIP, vui lòng kiểm tra lại định dạng tệp."
-            }
-        };
-
-        const categoryI18nMap = {
-            '表演類': { zh: '表演類', en: 'Performance & Cheerleading', vi: 'Biểu diễn & Cổ vũ' },
-            '攝影/影像創作類': { zh: '攝影/影像創作類', en: 'Photography & Visual Arts', vi: 'Nhiếp ảnh & Sáng tạo hình ảnh' },
-            '運動/健身類': { zh: '運動/健身類', en: 'Sports & Fitness', vi: 'Thể thao & Thể hình' },
-            '外貌美妝/穿搭類': { zh: '外貌美妝/穿搭類', en: 'Beauty, Makeup & Fashion', vi: 'Làm đẹp, Mỹ phẩm & Thời trang' },
-            '美食/餐飲類': { zh: '美食/餐飲類', en: 'Food & Dining', vi: 'Ẩm thực & Nhà hàng' },
-            '知識/學習/理財類': { zh: '知識/學習/理財類', en: 'Knowledge, Learning & Finance', vi: 'Kiến thức, Học tập & Tài chính' },
-            '娛樂/迷因/生活類': { zh: '娛樂/迷因/生活類', en: 'Entertainment, Memes & Lifestyle', vi: 'Giải trí, Meme & Đời sống' },
-            '其他/綜合個人帳號': { zh: '其他/綜合個人帳號', en: 'Other / General Personal Accounts', vi: 'Khác / Tài khoản cá nhân tổng hợp' }
-        };
-
-        let currentLang = 'zh';
-
-        function t(key) {
-            return (i18n[currentLang] && i18n[currentLang][key]) || i18n.zh[key] || key;
-        }
-
-        function translateCategory(catKey) {
-            return (categoryI18nMap[catKey] && categoryI18nMap[catKey][currentLang]) || catKey;
-        }
-
-        function setLanguage(lang) {
-            if (!i18n[lang]) return;
-            currentLang = lang;
-            document.documentElement.lang = t('htmlLang');
-            document.title = t('pageTitle');
-
-            ['zh', 'en', 'vi'].forEach(l => {
-                const btn = document.getElementById('lang-' + l);
-                if (btn) {
-                    if (l === lang) {
-                        btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg bg-white text-pink-600 shadow-xs transition-all";
-                    } else {
-                        btn.className = "px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all";
-                    }
-                }
-            });
-
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                el.textContent = t(key);
-            });
-
-            document.querySelectorAll('[data-i18n-html]').forEach(el => {
-                const key = el.getAttribute('data-i18n-html');
-                el.innerHTML = t(key);
-            });
-
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                el.placeholder = t(key);
-            });
-
-            // 若儀表板已顯示，重新渲染表格與圖表以套用新語系
-            if (!document.getElementById('dashboardSection').classList.contains('hidden')) {
-                renderDashboard();
-                filterTable();
-            }
-        }
-
-        let aggregatedData = {}; 
-        let currentMode = 'all'; 
-        let globalProcessedList = [];
-        let doughnutChartInstance = null;
-        let barChartInstance = null;
-
-        const performanceKeywords = ['taishin_wonders','cheer', 'cheerleader', 'cheerleaders', 'gofans', 'girls', 'bbcrew', '啦啦隊', '應援', '女孩', '棒球女孩', 'performance', 'dance', 'dancer', 'show', 'concert', 'stage', 'artist', 'theater', 'idol', '表演', '舞蹈', '舞者', '舞台', '演唱會', '音樂會', '演出', '劇團', '樂團', '藝人', '偶像', '練習生', 'passion_sisters', 'rakutengirls', 'fubonangels', 'unigirls', 'dragon_beauties', 'wing_stars','pilots_crew'];
-        const photoKeywords = ['photos', 'photo', 'photography', 'photographer', 'lens', 'camera', 'portrait', 'snapshot', '攝影', '人像', '街拍', '快門', '底片', '底片相機', '鏡頭', '相機', '寫真', '修圖', 'vsco', 'lightroom', 'nikon', 'canon', 'sony', 'fujifilm', 'streetphoto'];
-        const sportKeywords = ['ubon_guardians','taipei_mars','tsg','sport', 'workout', 'gym', 'run', 'tennis', 'badminton', 'billiards', 'basketball', 'football', 'soccer', 'swimming', 'yoga', 'athlete','baseball', '運動', '健身', '桌球', '撞球', '羽球', '籃球', '跑步', '瑜珈', '排球', '棒球'];
-        const beautyKeywords = ['beauty', 'makeup', 'skin', 'fashion', 'outfit', 'wear', 'style', 'dress', 'fit', 'model', '穿搭', '美妝', '保養', '瘦身', '時尚', '穿著', '配件', '美甲', '髮型', 'ootd', 'cosmetics', 'skincare'];
-        const foodKeywords = ['food', 'foodie', 'eat', 'cook', 'cafe', 'bakery', 'dessert', 'yummy', '美食', '餐廳', '甜點', '吃貨', '咖啡廳', '料理', '食譜', '探店', '下午茶', 'mcdonalds', 'bistro', 'dining'];
-        const studyKeywords = ['study', 'tips', 'english', 'learn', 'news', 'tech', 'stock', 'invest', 'design', 'code', 'dev', 'flutter', 'python', 'github', '軟體', '工程', '學習', '英文', '理財', '知識', '投資', '程式', '開發', '資訊', '科技', '筆記'];
-        const entertainmentKeywords = ['new','news','dcard.tw','kaohsiung','meme', 'fun', 'humor', 'joke', 'vlog', 'daily', 'life', 'game', 'tv', 'animation', '迷因', '搞笑', '生活', '娛樂', '日常', '遊戲', '動漫', '廢文', '短片'];
-
-        const keywordDict = {
-            '表演類': performanceKeywords,
-            '攝影/影像創作類': photoKeywords,
-            '運動/健身類': sportKeywords,
-            '外貌美妝/穿搭類': beautyKeywords,
-            '美食/餐飲類': foodKeywords,
-            '知識/學習/理財類': studyKeywords,
-            '娛樂/迷因/生活類': entertainmentKeywords
-        };
-
-        function classifyAccount(accName) {
-            if (!accName) return '其他/綜合個人帳號';
-            const name = accName.toLowerCase();
-            let scores = {};
-            for (let [category, keywords] of Object.entries(keywordDict)) {
-                let score = 0;
-                for (let kw of keywords) {
-                    if (name.includes(kw.toLowerCase())) score += 1;
-                }
-                scores[category] = score;
-            }
-
-            let bestCategory = '其他/綜合個人帳號';
-            let maxScore = 0;
-            for (let [category, score] of Object.entries(scores)) {
-                if (score > maxScore) {
-                    maxScore = score;
-                    bestCategory = category;
-                }
-            }
-            return bestCategory;
-        }
-
-        function loadDemoData() {
-            aggregatedData = {};
-            const demoViews = ['foodie_taipei', 'gourmet_hunter', '5teven___photos', 'dance_studio_tw', 'tech_news_daily', 'foodie_taipei', 'english_learning_tips', 'meme_central_tw'];
-            const demoLikes = ['foodie_taipei', '5teven___photos', 'beauty_secrets', 'outfit_inspirations', 'gym_workout_pro', 'foodie_taipei'];
-            const demoSaved = ['tech_news_daily', 'english_learning_tips', 'invest_stock_101', 'foodie_taipei', 'invest_stock_101'];
-
-            demoViews.forEach(a => recordInteraction(a, 'view'));
-            demoLikes.forEach(a => recordInteraction(a, 'like'));
-            demoSaved.forEach(a => recordInteraction(a, 'save'));
-
-            renderDashboard();
-        }
-
-        function recordInteraction(accountName, type) {
-            if (!accountName) return;
-            const cleanAcc = accountName.replace(/^@/, '').trim();
-            if (!cleanAcc) return;
-
-            if (!aggregatedData[cleanAcc]) {
-                aggregatedData[cleanAcc] = { view: 0, like: 0, save: 0 };
-            }
-            if (aggregatedData[cleanAcc][type] !== undefined) {
-                aggregatedData[cleanAcc][type]++;
-            }
-        }
-
-        async function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            loadingIndicator.classList.remove('hidden');
-            aggregatedData = {};
-
-            try {
-                const zip = new JSZip();
-                const zipContent = await zip.loadAsync(file);
-
-                for (let filename of Object.keys(zipContent.files)) {
-                    if (!filename.endsWith('.json')) continue;
-
-                    let type = null;
-                    if (filename.includes('posts_viewed') || filename.includes('viewed')) type = 'view';
-                    else if (filename.includes('liked_posts') || filename.includes('likes/liked')) type = 'like';
-                    else if (filename.includes('saved_posts') || filename.includes('saved')) type = 'save';
-
-                    if (type) {
-                        const fileData = await zipContent.files[filename].async('text');
-                        try {
-                            const data = JSON.parse(fileData);
-                            extractAccountsFromJSON(data, type);
-                        } catch (err) {
-                            console.error(`解析檔案 ${filename} 失敗:`, err);
-                        }
-                    }
-                }
-
-                loadingIndicator.classList.add('hidden');
-                if (Object.keys(aggregatedData).length === 0) {
-                    alert(t('alertNoValidJson'));
-                } else {
-                    renderDashboard();
-                }
-            } catch (error) {
-                loadingIndicator.classList.add('hidden');
-                console.error(error);
-                alert(t('alertZipError'));
-            }
-        }
-
-        function extractAccountsFromJSON(data, type) {
-            let items = [];
-            if (Array.isArray(data)) items = data;
-            else if (typeof data === 'object' && data !== null) {
-                for (let key in data) {
-                    if (Array.isArray(data[key])) {
-                        items = data[key];
-                        break;
-                    }
-                }
-                if (items.length === 0) items = [data];
-            }
-
-            for (let item of items) {
-                let acc = item.title || '';
-                if (!acc && item.string_list_data && item.string_list_data.length > 0) {
-                    acc = item.string_list_data[0].value || item.string_list_data[0].name || '';
-                }
-                if (!acc && item.string_map_data) {
-                    for (let subKey in item.string_map_data) {
-                        if (subKey.toLowerCase().includes('username') || item.string_map_data[subKey].value) {
-                            acc = item.string_map_data[subKey].value || '';
-                            break;
-                        }
-                    }
-                }
-                if (acc) recordInteraction(acc, type);
-            }
-        }
-
-        function switchMode(mode) {
-            currentMode = mode;
-            ['all', 'views', 'likes', 'saved'].forEach(m => {
-                const btn = document.getElementById(`btn-mode-${m}`);
-                if (m === mode) {
-                    btn.className = "px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-pink-600 text-white shadow-xs";
-                } else {
-                    btn.className = "px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all";
-                }
-            });
-            renderDashboard();
-        }
-
-        function renderDashboard() {
-            globalProcessedList = [];
-            let totalViews = 0, totalLikes = 0, totalSaved = 0;
-
-            for (let [acc, counts] of Object.entries(aggregatedData)) {
-                totalViews += counts.view;
-                totalLikes += counts.like;
-                totalSaved += counts.save;
-
-                let weight = 0;
-                if (currentMode === 'all') weight = counts.view + counts.like * 2 + counts.save * 3;
-                else if (currentMode === 'views') weight = counts.view;
-                else if (currentMode === 'likes') weight = counts.like;
-                else if (currentMode === 'saved') weight = counts.save;
-
-                if (weight > 0) {
-                    globalProcessedList.push({
-                        account: acc,
-                        category: classifyAccount(acc),
-                        view: counts.view,
-                        like: counts.like,
-                        save: counts.save,
-                        weight: weight
-                    });
-                }
-            }
-
-            globalProcessedList.sort((a, b) => b.weight - a.weight);
-
-            const totalInteractionCount = globalProcessedList.reduce((sum, d) => sum + d.weight, 0);
-            const uniqueAccCount = globalProcessedList.length;
-            const top10Sum = globalProcessedList.slice(0, 10).reduce((sum, d) => sum + d.weight, 0);
-            const top10Share = totalInteractionCount > 0 ? (top10Sum / totalInteractionCount) * 100 : 0;
-            const totalAllEvents = totalViews + totalLikes + totalSaved;
-            const actionRatio = totalAllEvents > 0 ? ((totalLikes + totalSaved) / totalAllEvents) * 100 : 0;
-
-            document.getElementById('metricTotalViews').innerText = totalInteractionCount.toLocaleString();
-            document.getElementById('metricUniqueAccs').innerText = uniqueAccCount.toLocaleString();
-            document.getElementById('metricTop10Share').innerText = top10Share.toFixed(1) + '%';
-            document.getElementById('metricActionRatio').innerText = actionRatio.toFixed(1) + '%';
-
-            const catCounts = {
-                '表演類': 0, '攝影/影像創作類': 0, '運動/健身類': 0,
-                '外貌美妝/穿搭類': 0, '美食/餐飲類': 0, '知識/學習/理財類': 0,
-                '娛樂/迷因/生活類': 0, '其他/綜合個人帳號': 0
-            };
-
-            globalProcessedList.forEach(d => {
-                if (catCounts[d.category] !== undefined) catCounts[d.category] += d.weight;
-                else catCounts['其他/綜合個人帳號'] += d.weight;
-            });
-
-            renderTopAccountsTable(globalProcessedList.slice(0, 10));
-            renderCategoryTable(catCounts, totalInteractionCount);
-            renderFullTable(globalProcessedList);
-            renderCharts(catCounts, globalProcessedList.slice(0, 10));
-
-            document.getElementById('uploadSection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            document.getElementById('reanalyzeBtn').classList.remove('hidden');
-
-            const exportBtn = document.getElementById('exportBtn');
-            exportBtn.disabled = false;
-            exportBtn.className = 'px-4 py-2 text-xs sm:text-sm font-medium text-white ig-gradient rounded-xl transition-all flex items-center space-x-2 shadow-md hover:opacity-95';
-        }
-
-        function resetAnalysis() {
-            aggregatedData = {};
-            globalProcessedList = [];
-            document.getElementById('zipFileInput').value = '';
-            document.getElementById('dashboardSection').classList.add('hidden');
-            document.getElementById('reanalyzeBtn').classList.add('hidden');
-            document.getElementById('uploadSection').classList.remove('hidden');
-
-            const exportBtn = document.getElementById('exportBtn');
-            exportBtn.disabled = true;
-            exportBtn.className = 'px-4 py-2 text-xs sm:text-sm font-medium text-white bg-slate-300 rounded-xl transition-all flex items-center space-x-2 cursor-not-allowed shadow-xs';
-        }
-
-        function renderTopAccountsTable(top10) {
-            const tbody = document.getElementById('topAccountsTableBody');
-            tbody.innerHTML = '';
-            top10.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors';
-                tr.innerHTML = `
-                    <td class="py-3 px-4 font-semibold text-slate-500">#${index + 1}</td>
-                    <td class="py-3 px-4 font-medium text-slate-900">@${item.account}</td>
-                    <td class="py-3 px-4 text-right font-semibold text-pink-600">${item.weight.toLocaleString()}${t('scoreUnit')}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderCategoryTable(catCounts, totalInteractionCount) {
-            const tbody = document.getElementById('categoryTableBody');
-            tbody.innerHTML = '';
-            Object.entries(catCounts).forEach(([cat, count]) => {
-                const percentage = totalInteractionCount > 0 ? ((count / totalInteractionCount) * 100).toFixed(2) : 0;
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors';
-                tr.innerHTML = `
-                    <td class="py-3 px-4 font-medium text-slate-900 flex items-center space-x-2">
-                        <span class="w-2.5 h-2.5 rounded-full inline-block shrink-0" style="background-color: ${getCategoryColor(cat)}"></span>
-                        <span>${translateCategory(cat)}</span>
-                    </td>
-                    <td class="py-3 px-4 text-right text-slate-700">${count.toLocaleString()}</td>
-                    <td class="py-3 px-4 text-right font-semibold text-slate-900">${percentage}%</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderFullTable(data) {
-            const tbody = document.getElementById('fullAccountsTableBody');
-            tbody.innerHTML = '';
-            data.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors';
-                tr.innerHTML = `
-                    <td class="py-3 px-4 text-slate-400 text-xs">${index + 1}</td>
-                    <td class="py-3 px-4 font-medium text-slate-900">@${item.account}</td>
-                    <td class="py-3 px-4">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-medium" style="background-color: ${getCategoryColor(item.category)}20; color: ${getCategoryColor(item.category)}">
-                            ${translateCategory(item.category)}
-                        </span>
-                    </td>
-                    <td class="py-3 px-4 text-center font-medium text-blue-600">${item.view}</td>
-                    <td class="py-3 px-4 text-center font-medium text-red-500">${item.like}</td>
-                    <td class="py-3 px-4 text-center font-medium text-amber-500">${item.save}</td>
-                    <td class="py-3 px-4 text-right font-semibold text-slate-700">${item.weight}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function filterTable() {
-            const selectedCategory = document.getElementById('categoryFilter').value;
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            
-            const filtered = globalProcessedList.filter(d => {
-                const matchesCategory = (selectedCategory === 'all' || d.category === selectedCategory);
-                const translatedCat = translateCategory(d.category).toLowerCase();
-                const matchesQuery = d.account.toLowerCase().includes(query) || d.category.toLowerCase().includes(query) || translatedCat.includes(query);
-                return matchesCategory && matchesQuery;
-            });
-            renderFullTable(filtered);
-        }
-
-        function getCategoryColor(category) {
-            switch(category) {
-                case '表演類': return '#ec4899';
-                case '攝影/影像創作類': return '#0284c7';
-                case '運動/健身類': return '#10b981';
-                case '外貌美妝/穿搭類': return '#e1306c';
-                case '美食/餐飲類': return '#f09433';
-                case '知識/學習/理財類': return '#4f46e5';
-                case '娛樂/迷因/生活類': return '#8b5cf6';
-                default: return '#64748b';
-            }
-        }
-
-        function renderCharts(catCounts, top10) {
-            const doughnutCtx = document.getElementById('categoryDoughnutChart').getContext('2d');
-            if (doughnutChartInstance) doughnutChartInstance.destroy();
-
-            const translatedLabels = Object.keys(catCounts).map(cat => translateCategory(cat));
-
-            doughnutChartInstance = new Chart(doughnutCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: translatedLabels,
-                    datasets: [{
-                        data: Object.values(catCounts),
-                        backgroundColor: ['#ec4899', '#0284c7', '#10b981', '#e1306c', '#f09433', '#4f46e5', '#8b5cf6', '#64748b'],
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } } }
-                    },
-                    cutout: '65%'
-                }
-            });
-
-            const barCtx = document.getElementById('topAccountsBarChart').getContext('2d');
-            if (barChartInstance) barChartInstance.destroy();
-
-            barChartInstance = new Chart(barCtx, {
-                type: 'bar',
-                data: {
-                    labels: top10.map(item => '@' + item.account),
-                    datasets: [{
-                        label: t('colWeightScore'),
-                        data: top10.map(item => item.weight),
-                        backgroundColor: '#cc2366',
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 } } },
-                        y: { grid: { color: '#f1f3f5' }, ticks: { font: { family: 'Inter', size: 11 } } }
-                    }
-                }
-            });
-        }
-
-        function exportReport() {
-            window.print();
-        }
-
-        window.setLanguage = setLanguage;
-        window.handleFileUpload = handleFileUpload;
-        window.resetAnalysis = resetAnalysis;
-        window.loadDemoData = loadDemoData;
-        window.switchMode = switchMode;
-        window.filterTable = filterTable;
-        window.exportReport = exportReport;
-    </script>
+<body>
+<div class="page">
+  <header class="mast">
+    <div>
+      <p class="eyebrow" id="eyebrow"></p>
+      <h1 id="h1"></h1>
+      <p class="lede" id="lede"></p>
+    </div>
+    <div class="lang" role="group" aria-label="Language / 語言 / Ngôn ngữ">
+      <button type="button" id="lang-en" data-l="en">EN</button>
+      <button type="button" id="lang-zh" data-l="zh">中文</button>
+      <button type="button" id="lang-vi" data-l="vi">Tiếng Việt</button>
+    </div>
+  </header>
+  <main class="stage" id="stage">
+    <section class="phone" id="phone-container" aria-label="Feed"><div class="screen" id="screen"></div></section>
+    <aside class="notebook nb" id="notebook" aria-live="polite"></aside>
+  </main>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const CATS={
+  look:{color:"#D9468F",comp:true,en:["Appearance & filters","Appearance"],zh:["外貌與濾鏡","外貌"],vi:["Diện mạo & Bộ lọc","Diện mạo"]},
+  body:{color:"#E07A2E",comp:true,en:["Fitness & diet culture","Diet culture"],zh:["健身與飲食文化","飲食文化"],vi:["Thể hình & Văn hóa ăn kiêng","Văn hóa ăn kiêng"]},
+  life:{color:"#C49517",comp:true,en:["lifestyle","Lifestyle"],zh:["生活風格","生活風格"],vi:["Phong cách sống","Phong cách sống"]},
+  friends:{color:"#2F8F6B",comp:false,en:["Friends & family","Friends"],zh:["朋友與家人","朋友"],vi:["Bạn bè & Gia đình","Bạn bè"]},
+  hobby:{color:"#3A72C4",comp:false,en:["Hobbies & skills","Hobbies"],zh:["興趣與技能","興趣"],vi:["Sở thích & Kỹ năng","Sở thích"]},
+  animals:{color:"#7A5BC7",comp:false,en:["Animals","Animals"],zh:["動物","動物"],vi:["Động vật","Động vật"]}
+};
+const KEYS=Object.keys(CATS);
+const BOOST={look:.5,body:.4,life:.4,friends:0,hobby:0,animals:0};
+const STUCK={look:6,body:6.5,life:3,friends:0,hobby:0,animals:0};
+const POSTS = {
+  look: [
+    ["mei.glow", 38211, "Golden-ratio outfits for petite 155cm girls 👠｜High-waisted trousers that make you look 170cm", "Master the 3:7 'short top, long bottom' rule and add 10cm to your legs instantly!", "155cm 小隻女的黃金比例穿搭 👠｜視覺秒變 170cm 的高腰神褲提案", "掌握『上短下長』3:7 黃金法則，腿長瞬間拉長 10 公分！", "Trang phục tỷ lệ vàng cho bạn gái 155cm 👠｜Quần cạp cao giúp cao 170cm", "Nắm vững quy tắc 3:7 'áo ngắn quần dài' giúp chân dài hơn 10cm lập tức!", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"],
+    ["yuting_", 21540, "Korean minimalist OOTD 🧥✨｜Get the K-drama heroine's classy look", "Look high-end without spending much! A layering formula in muted earth tones.", "韓系極簡風 OOTD 韓劇女主同款質感搭配 🧥✨", "不用花大錢也能穿出高級感！低飽和度大地色系的疊穿公式。", "OOTD tối giản Hàn Quốc 🧥✨｜Phong cách nữ chính phim Hàn", "Mặc đẹp sang chảnh mà không tốn kém! Công thức phối màu đất trầm.", "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600"],
+    ["kai.fits", 17402, "Outfit guide for yellow or darker skin tones 🎨｜Colors that brighten vs. dull your skin, tested", "Stop wearing the wrong colors! The right shades brighten your skin by two tones.", "黃黑皮穿搭避坑指南 🎨｜顯白 vs 顯髒的色彩對比實測", "別再穿錯顏色了！選對穿搭色彩，膚色立刻提亮兩個色階。", "Hướng dẫn phối đồ cho da ngăm 🎨｜Màu sáng vs màu tối thực tế", "Đừng mặc sai màu! Tông màu đúng giúp nâng tông da sáng hơn.", "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600"],
+    ["soft.daily", 26930, "Complete guide to retro Y2K style 💖｜Back to the 2000s 'hot girl' formula", "Low-rise jeans + a cropped top: the must-have millennium look!", "復古 Y2K 穿搭全攻略 💖｜秒回 2000 年的辣妹公式", "低腰褲 + 短版上衣，打造辣妹必須的千禧年潮流風格！", "Hướng dẫn phong cách Y2K cổ điển 💖｜Công thức hot girl năm 2000", "Quần cạp trễ + áo croptop: phong cách ngàn năm không thể thiếu!", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600"],
+    ["hsin__", 14388, "Lifesaver for pear-shaped, big-boned bodies 👗｜5 outfit secrets to hide fat and look slimmer", "Wide hips and a big belly? This A-line skirt and wide-leg pants hide every 'flaw'!", "大骨架梨形身材救星 👗｜遮肉顯瘦 5 個穿搭密碼", "跨寬腹大怎麼辦？這款 A 字裙跟寬褲完美遮蓋所有身形缺點！", "Cứu tinh dáng người quả lê 👗｜5 bí quyết mặc đẹp che khuyết điểm", "Hông to bụng mỡ? Chân váy chữ A và quần ống rộng che sạch khuyết điểm!", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600"]
+  ],
+  body: [
+    ["who.said", 18440, "30-day glow-up plan! From 55kg to 45kg with straight legs + abs 💪🔥", "Say no to 'fake wide hips'! Just 15 minutes a day, and K-pop idol legs are yours this summer!", "30天變美計畫！從 55kg 到 45kg 的直腿 + 腹肌養成術 💪🔥", "拒絕假胯寬！每天堅持 15 分鐘，這個夏天的女團腿屬於你！", "Kế hoạch 30 ngày lột xác! Từ 55kg xuống 45kg chân thẳng + cơ bụng 💪🔥", "Nói không với hông giả! Chỉ 15 phút mỗi ngày, chân đẹp như idol K-pop!", "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"],
+    ["ratio.king", 26508, "Do you have 'fake wide hips' and rounded shoulders? 4 moves to fix your posture and look 5kg lighter!", "Posture decides your vibe! Fix your 'tech neck' and hips and look 10× better in clothes!", "你也有『假胯寬』跟『圓肩駝背』嗎？4 個動作矯正體態顯瘦 5 公斤！", "體態決定氣質！告別猥瑣頸與假胯寬，穿衣服好看 10 倍！", "Bạn bị hông giả và gù lưng? 4 động tác sửa tư thế giúp gọn 5kg!", "Tư thế quyết định thần thái! Sửa gù lưng và hông giúp mặc đồ đẹp gấp 10!", "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600"]
+  ],
+  life: [
+    ["cat.memes", 2774, "A college student's daily Vlog: my 24 hours of extreme self-discipline 🌿✨", "Up at 5:30 for a morning run, a homemade keto oat bowl, then 8 hours of focused study in the library", "大學生的日常 Vlog：我的 24 小時極致自律生活 🌿✨", "早上 5:30 起床晨跑，手作生酮燕麥碗，圖書館高效讀書 8 小時", "Vlog hằng ngày của sinh viên: 24 giờ kỷ luật bản thân cực độ 🌿✨", "Dậy lúc 5:30 chạy bộ, làm bát yến mạch keto, học tập trung 8 tiếng thư viện", "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600"]
+  ],
+  friends: [
+    ["screenshot.q", 28432, "10 years of friendship in our group 💕｜From high school all the way to weddings!", "The best friendship: no need to pretend, always there for each other! This is a dream friendship.", "我們這群朋友的 10 年友情 💕｜一起從高中走到結婚!", "最好的友情就是：見面不用裝，隨時都在！這才是夢幻神仙友誼。", "Tình bạn 10 năm trong nhóm 💕｜Từ cấp ba đến lễ cưới!", "Tình bạn tuyệt vời nhất: không cần giả tạo, luôn ở bên nhau!", "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600"]
+  ],
+  hobby: [
+    ["meme.hs", 4402, "My efficient iPad note-taking 📝｜A complete guide to paperless digital study", "Build a dream digital planner with GoodNotes and make revision a visual treat!", "我的高效率 iPad 筆記術 📝｜數位化無紙化學習全攻略", "用 GoodNotes 打造夢幻電子手帳，讓複習變成一種視覺享受！", "Cách ghi chú iPad hiệu quả 📝｜Hướng dẫn học tập kỹ thuật số không giấy", "Tạo sổ tay điện tử mơ ước với GoodNotes để ôn tập tuyệt vời hơn!", "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600"]
+  ],
+  animals: [
+    ["firstclass.k", 14966, "I could watch this cat video 100 times 🐱｜Super cute pet meme compilation", "What harm could a little kitten mean? A day of being hit by cuteness!", "這個貓咪影片我能重複看 100 遍 🐱｜超級萌寵迷因集錦", "小貓咪能有什么壞心思呢？被可愛爆擊的一天！", "Tôi có thể xem video mèo này 100 lần 🐱｜Tổng hợp meme thú cưng siêu dễ thương", "Mèo con có ý đồ gì xấu đâu? Một ngày bị sự dễ thương tấn công!", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600"]
+  ]
+};
+
+const T={
+en:{
+  eyebrow:"Algorithm literacy · classroom game",h1:"What the Feed Knows",
+  lede:"Scroll 30 posts the way you normally would. You won't search, follow, or type anything. Then open the algorithm's notebook and see what it learned about you.",
+  foot:"A simplified model for classroom use. Real platforms use far more signals, but the core loop is the same: what you pause on becomes what you see. All accounts and posts are fictional.",
+  r1:"Round 1",r2:"Round 2",
+  introH:"Just scroll.",introP:"You'll see 30 posts. Treat them like your real feed.",
+  introL:"<li><b>Pause</b> on anything that catches your eye.</li><li>Only <b>like</b> or <b>replay</b> posts you enjoy.</li><li>Skip what bores you.</li>",
+  introP2:"Don't try to beat the game yet. Round 2 is for that.",start:"Start scrolling",
+  keys:"Keys: ↓ or Space next · L like · R replay",
+  postN:(n,t)=>`Post ${n} / ${t}`,reset:"Reset suggestions",sugg:"Suggested for you",
+  like:"Like",replay:"Replay",ni:"Not interested",likes:n=>`${n.toLocaleString("en-US")} likes`,next:"Next post ↓",
+  toastReset:"Suggestions reset. Everything it learned about you is gone.",
+  r1done:"Round 1 done",r1doneH:"30 posts. Nothing typed.",
+  r1doneP:"You never told the feed what you like. Open the notebook to see what it decided anyway.",
+  toR2:"Round 2: Escape the rabbit hole",againR1:"Play Round 1 again",
+  r2H:"Escape the rabbit hole.",r2P:"You get 20 posts. You win if your <b>last 10 posts</b> have:",
+  r2L:"<li>at least <b>5 different types</b>, and</li><li>no more than <b>3 comparison posts</b> (warm colors)</li>",
+  r2P2:"New tools: <b>Not interested</b> on every post, and <b>Reset suggestions</b> (one use). Pausing still counts.",
+  stuck:"Start from a stuck feed",mine:"Start from my Round 1 feed",
+  r2done:"Round 2 done",winH:"You got out.",loseH:"Still stuck.",
+  winP:"Your feed opened back up. Check the notebook to see what did it.",
+  loseP:"The feed kept pulling you back. Check the notebook to see why.",
+  retry:"Try Round 2 again",restart:"Start over from Round 1",startOver:"Start over",
+  nbTitle:"The algorithm's notebook",recording:"Recording",locked:"Locked",
+  sigs:"Signals recorded",sigsNote:"pauses, likes and replays",
+  redactLbl:"What it thinks you want · redacted until post 30",
+  lockedNote:"Every second you spend on a post is written down here. So is every like and replay. You'll see the full notebook when Round 1 ends.",
+  revealTitle:"What it learned about you",unlocked:"Unlocked",
+  verdict:(lab,col,p)=>`To this feed, you are mostly <b style="color:${col}">${lab}</b>. That's a ${p} chance for your next post.`,
+  your30:"Your 30 posts, in order",post1:"Post 1",testing:"Posts 1–5: testing you at random",
+  first10:"First 10 posts",last10:"Last 10 posts",typesN:n=>`${n} types`,compN:n=>`${n} comparison posts`,
+  odds:"Odds for your next post",strongest:"Strongest signals you sent",
+  paused:s=>`paused ${s}s`,liked:"liked",replayed:n=>`replayed ×${n}`,
+  none:"You skipped almost everything, so it learned very little. Most of what you saw came from the head start below.",
+  receipt:"The receipt",timeW:"Time watched",likesW:"Likes",replaysW:"Replays",skips:"Quick skips (under 1s)",typed:"Things you typed or searched",sec:s=>`${s}s`,
+  note1:"<b>Pausing is a vote.</b> Any post you looked at for more than a second counted as interest, even if it made you feel worse.",
+  note2:"<b>The game was tilted.</b> Before you scrolled at all, four types got a boost because they keep people watching: Appearance, Diet culture, and Lifestyle.",
+  warm:"Warm: comparison content",cool:"Cool: connection and interests",
+  liveTitle:"Round 2: the notebook is open",live:"Live",liveP:"This time you can watch the odds change after every post.",
+  typesL10:"Types in last 10 posts",need5:"need 5+",compL10:"Comparison posts in last 10",max3:"max 3",
+  soFar:"Your Round 2 feed so far",nothing:"Nothing yet.",
+  winT:"You got out",loseT:"Still stuck",result:"Round 2 result",
+  your20:"Your 20 posts · outlined = marked Not interested",did:"What you did",
+  niCount:"Marked Not interested",pausedComp:"Paused on a comparison post anyway",usedReset:"Used Reset suggestions",yes:"yes",no:"no",compOdds:"Comparison odds for your next post",
+  pausedNote:n=>`You paused on ${n} comparison post${n>1?"s":""}. Each pause told the feed to send more, even when you were only looking.`,
+  resetNote:"Reset erased what the feed had learned about you. It did not remove the platform's boost, so comparison content started creeping back right away.",
+  noResetNote:"Not interested works one post at a time. Reset is faster, but it can't remove the boost the platform gives some content.",
+  catherine:"This is one reason harmful content can return after someone unfollows and blocks, as Catherine describes in the Utah Insight segment. Users can steer, but the platform's design still pulls.",
+  discussT:"Discuss",
+  discuss:["Which of your actions did the algorithm count as interest? Which one surprised you?","Four types got a head start before you did anything. Why might a platform design it that way?","In Round 2, what worked? Did any content come back after you tried to remove it?","Catherine, in the Utah Insight segment, unfollowed and blocked accounts but still got harmful videos. How does this game help explain that?","Design one \"seatbelt\": a feature a platform could add to protect teens without banning the app."]
+},
+zh:{
+  eyebrow:"演算法素養 · 課堂遊戲",h1:"演算法知道你什麼",
+  lede:"像平常一樣滑完 30 則貼文。你不需要搜尋、追蹤或輸入任何東西。滑完後打開演算法的筆記本，看看它從你身上學到了什麼。",
+  foot:"這是課堂用的簡化模型。真實平台使用的訊號多得多，但核心機制相同：你停在哪裡，就會看到更多那類內容。所有帳號與貼文皆為虛構。",
+  r1:"第一回合",r2:"第二回合",
+  introH:"照常滑就好。",introP:"你會看到 30 則貼文，就當作是你真正的社交軟體。",
+  introL:"<li>看到吸引你的就<b>停下來</b>。</li><li>喜歡時在<b>按讚</b>或<b>重看</b>。</li><li>無聊的就滑走。</li>",
+  introP2:"先不要想破解遊戲，那是第二回合的事。",start:"開始滑",
+  keys:"鍵盤：↓ 或空白鍵下一則 · L 按讚 · R 重看",
+  postN:(n,t)=>`第 ${n} / ${t} 則`,reset:"重設推薦",sugg:"為你推薦",
+  like:"讚",replay:"重看",ni:"不感興趣",likes:n=>`${n.toLocaleString("zh-TW")} 個讚`,next:"下一則 ↓",
+  toastReset:"推薦已重設，它學到的關於你的一切都清除了。",
+  r1done:"第一回合結束",r1doneH:"30 則貼文，零輸入。",
+  r1doneP:"你從沒告訴動態牆你喜歡什麼。打開筆記本，看看它還是替你決定了什麼。",
+  toR2:"第二回合：逃出兔子洞",againR1:"重玩第一回合",
+  r2H:"逃出兔子洞。",r2P:"你有 20 則貼文。<b>最後 10 則</b>符合以下條件就獲勝：",
+  r2L:"<li>至少 <b>5 種不同類型</b>，而且</li><li>比較型貼文（暖色）<b>不超過 3 則</b></li>",
+  r2P2:"新工具：每則貼文都有<b>不感興趣</b>，還有<b>重設推薦</b>（限用一次）。停留仍然會被記錄。",
+  stuck:"從被困住的動態牆開始",mine:"從我第一回合的動態牆開始",
+  r2done:"第二回合結束",winH:"你逃出來了。",loseH:"還是被困住。",
+  winP:"你的動態牆重新變得多元。看看筆記本，是什麼起了作用。",
+  loseP:"動態牆一直把你拉回去。看看筆記本找原因。",
+  retry:"再玩一次第二回合",restart:"從第一回合重新開始",startOver:"重新開始",
+  nbTitle:"演算法的筆記本",recording:"記錄中",locked:"已鎖定",
+  sigs:"已記錄訊號",sigsNote:"停留、按讚與重看",
+  redactLbl:"它認為你想看什麼 · 第 30 則後公開",
+  lockedNote:"你在每則貼文停留的每一秒都會記在這裡，每次按讚和重看也是。第一回合結束後就能看到完整筆記本。",
+  revealTitle:"它從你身上學到了什麼",unlocked:"已解鎖",
+  verdict:(lab,col,p)=>`對這個動態牆來說，你主要是<b style="color:${col}">${lab}</b>的觀眾。你的下一則貼文有 ${p} 的機率是這類內容。`,
+  your30:"你的 30 則貼文（依順序）",post1:"第 1 則",testing:"第 1–5 則：隨機測試你",
+  first10:"前 10 則",last10:"後 10 則",typesN:n=>`${n} 種類型`,compN:n=>`${n} 則比較型貼文`,
+  odds:"下一則貼文的機率",strongest:"你送出最強的訊號",
+  paused:s=>`停留 ${s} 秒`,liked:"按讚",replayed:n=>`重看 ×${n}`,
+  none:"你幾乎全部滑過，所以它學到的很少。你看到的內容大多來自下方說明的起跑優勢。",
+  receipt:"明細",timeW:"觀看時間",likesW:"按讚",replaysW:"重看",skips:"快速滑過（不到 1 秒）",typed:"你輸入或搜尋的東西",sec:s=>`${s} 秒`,
+  note1:"<b>停留就是投票。</b>任何你看超過一秒的貼文都被算成「有興趣」，即使它讓你心情變差。",
+  note2:"<b>遊戲一開始就不公平。</b>你還沒開始滑，就有三類內容因為能讓人一直看下去而被加權：外貌、飲食文化、生活風格。",
+  warm:"暖色：比較型內容",cool:"冷色：人際連結與興趣",
+  liveTitle:"第二回合：筆記本已公開",live:"即時",liveP:"這次你可以看到每則貼文後機率如何變化。",
+  typesL10:"最後 10 則的類型數",need5:"需 5 種以上",compL10:"最後 10 則的比較型貼文",max3:"最多 3 則",
+  soFar:"目前的第二回合動態牆",nothing:"還沒有。",
+  winT:"你逃出來了",loseT:"還是被困住",result:"第二回合結果",
+  your20:"你的 20 則貼文 · 有框線＝標記不感興趣",did:"你做了什麼",
+  niCount:"標記不感興趣",pausedComp:"仍在比較型貼文上停留",usedReset:"使用重設推薦",yes:"是",no:"否",compOdds:"下一則是比較型內容的機率",
+  pausedNote:n=>`你在 ${n} 則比較型貼文上停留。每次停留都在告訴動態牆「多給我一點」，即使你只是看看。`,
+  resetNote:"重設清除了動態牆學到的關於你的偏好，但沒有移除平台的加權，所以比較型內容馬上又慢慢回來。",
+  noResetNote:"「不感興趣」一次只能處理一則。重設比較快，但無法移除平台給某些內容的加權。",
+  catherine:"這說明了為什麼有人取消追蹤、封鎖帳號後，有害內容仍會回來，就像 Catherine 在 Utah Insight 影片中說的。使用者可以調整方向，但平台的設計仍在拉扯。",
+  discussT:"討論",
+  discuss:["演算法把你的哪些動作當成「有興趣」？哪一個讓你意外？","你還沒開始滑，就有三類內容被加權。平台為什麼可能這樣設計？","第二回合中什麼方法有效？你想移除的內容有沒有再出現？","Utah Insight 影片中，Catherine 取消追蹤並封鎖帳號，仍持續收到有害影片。這個遊戲如何解釋這件事？","設計一條「安全帶」：平台可以加入什麼功能來保護青少年，而不必禁用整個 App？"]
+},
+vi:{
+  eyebrow:"Năng lực thuật toán · Trò chơi lớp học",h1:"Thuật toán biết gì về bạn",
+  lede:"Lướt 30 bài đăng như bình thường. Bạn không cần tìm kiếm, theo dõi hay gõ gì cả. Sau đó mở sổ tay thuật toán để xem nó đã học được gì về bạn.",
+  foot:"Mô hình đơn giản hóa cho lớp học. Các nền tảng thực tế sử dụng nhiều tín hiệu hơn, nhưng vòng lặp cốt lõi vẫn giống nhau: bạn dừng lại ở đâu, bạn sẽ thấy nhiều hơn ở đó. Mọi tài khoản và bài đăng đều là hư cấu.",
+  r1:"Vòng 1",r2:"Vòng 2",
+  introH:"Cứ lướt bình thường.",introP:"Bạn sẽ thấy 30 bài đăng. Hãy coi chúng như bảng tin thực tế của bạn.",
+  introL:"<li><b>Dừng lại</b> ở bất cứ thứ gì thu hút sự chú ý của bạn.</li><li>Chỉ <b>thích</b> hoặc <b>xem lại</b> bài bạn thích.</li><li>Bỏ qua những gì làm bạn chán.</li>",
+  introP2:"Đừng cố phá đảo trò chơi vội. Vòng 2 là dành cho việc đó.",start:"Bắt đầu lướt",
+  keys:"Phím: ↓ hoặc Phím cách tiếp theo · L Thích · R Xem lại",
+  postN:(n,t)=>`Bài ${n} / ${t}`,reset:"Đặt lại gợi ý",sugg:"Gợi ý cho bạn",
+  like:"Thích",replay:"Xem lại",ni:"Không quan tâm",likes:n=>`${n.toLocaleString("vi-VN")} lượt thích`,next:"Bài tiếp ↓",
+  toastReset:"Đã đặt lại gợi ý. Mọi thứ nó học về bạn đã bị xóa.",
+  r1done:"Đã xong Vòng 1",r1doneH:"30 bài đăng. Không gõ gì.",
+  r1doneP:"Bạn chưa bao giờ nói với bảng tin những gì bạn thích. Hãy mở sổ tay để xem nó đã quyết định gì.",
+  toR2:"Vòng 2: Thoát khỏi hang thỏ",againR1:"Chơi lại Vòng 1",
+  r2H:"Thoát khỏi hang thỏ.",r2P:"Bạn có 20 bài đăng. Bạn thắng nếu <b>10 bài cuối cùng</b> có:",
+  r2L:"<li>ít nhất <b>5 loại khác nhau</b>, và</li><li>không quá <b>3 bài so sánh</b> (màu ấm)</li>",
+  r2P2:"Công cụ mới: Nút <b>Không quan tâm</b> ở mỗi bài, và <b>Đặt lại gợi ý</b> (dùng 1 lần). Thời gian dừng vẫn được tính.",
+  stuck:"Bắt đầu từ một bảng tin bị kẹt",mine:"Bắt đầu từ bảng tin Vòng 1 của tôi",
+  r2done:"Đã xong Vòng 2",winH:"Bạn đã thoát.",loseH:"Vẫn bị kẹt.",
+  winP:"Bảng tin của bạn đã mở trở lại. Kiểm tra sổ tay để xem điều gì đã giúp bạn.",
+  loseP:"Bảng tin tiếp tục kéo bạn lại. Kiểm tra sổ tay để xem tại sao.",
+  retry:"Thử lại Vòng 2",restart:"Bắt đầu lại từ Vòng 1",startOver:"Bắt đầu lại",
+  nbTitle:"Sổ tay thuật toán",recording:"Đang ghi",locked:"Đã khóa",
+  sigs:"Tín hiệu đã ghi",sigsNote:"dừng lại, thích và xem lại",
+  redactLbl:"Nó nghĩ bạn muốn gì · ẩn cho đến bài 30",
+  lockedNote:"Mỗi giây bạn dành cho một bài đăng đều được ghi lại ở đây. Cả lượt thích và xem lại cũng vậy. Bạn sẽ thấy sổ tay đầy đủ khi Vòng 1 kết thúc.",
+  revealTitle:"Nó đã học được gì về bạn",unlocked:"Đã mở khóa",
+  verdict:(lab,col,p)=>`Đối với bảng tin này, bạn chủ yếu là <b style="color:${col}">${lab}</b>. Cơ hội cho bài tiếp theo là ${p}.`,
+  your30:"30 bài đăng của bạn, theo thứ tự",post1:"Bài 1",testing:"Bài 1–5: kiểm tra ngẫu nhiên bạn",
+  first10:"10 bài đầu",last10:"10 bài cuối",typesN:n=>`${n} loại`,compN:n=>`${n} bài so sánh`,
+  odds:"Tỷ lệ cho bài tiếp theo",strongest:"Tín hiệu mạnh nhất bạn gửi",
+  paused:s=>`dừng ${s}s`,liked:"đã thích",replayed:n=>`xem lại ×${n}`,
+  none:"Bạn đã bỏ qua hầu hết, vì vậy nó học được rất ít. Phần lớn những gì bạn thấy đến từ ưu đãi khởi đầu bên dưới.",
+  receipt:"Biên lai",timeW:"Thời gian xem",likesW:"Lượt thích",replaysW:"Xem lại",skips:"Bỏ qua nhanh (dưới 1s)",typed:"Những gì bạn gõ hoặc tìm kiếm",sec:s=>`${s}s`,
+  note1:"<b>Dừng lại là một phiếu bầu.</b> Bất kỳ bài nào bạn nhìn quá một giây đều được tính là quan tâm, dù nó làm bạn buồn hơn.",
+  note2:"<b>Trò chơi đã bị nghiêng.</b> Trước khi bạn lướt, bốn loại đã nhận được hỗ trợ vì chúng giữ chân người xem: Diện mạo, Văn hóa ăn kiêng và Phong cách sống.",
+  warm:"Ấm: nội dung so sánh",cool:"Mát: kết nối và sở thích",
+  liveTitle:"Vòng 2: sổ tay đã mở",live:"Trực tiếp",liveP:"Lần này bạn có thể xem tỷ lệ thay đổi sau mỗi bài đăng.",
+  typesL10:"Các loại trong 10 bài cuối",need5:"cần 5+",compL10:"Bài so sánh trong 10 bài cuối",max3:"tối đa 3",
+  soFar:"Bảng tin Vòng 2 của bạn cho đến nay",nothing:"Chưa có gì.",
+  winT:"Bạn đã thoát",loseT:"Vẫn bị kẹt",result:"Kết quả Vòng 2",
+  your20:"20 bài đăng của bạn · viền = đánh dấu Không quan tâm",did:"Những gì bạn đã làm",
+  niCount:"Đánh dấu Không quan tâm",pausedComp:"Vẫn dừng ở bài so sánh",usedReset:"Đã dùng Đặt lại gợi ý",yes:"có",no:"không",compOdds:"Tỷ lệ so sánh cho bài tiếp theo",
+  pausedNote:n=>`Bạn đã dừng lại ở ${n} bài so sánh. Mỗi lần dừng đều bảo bảng tin gửi thêm, ngay cả khi bạn chỉ nhìn.`,
+  resetNote:"Đặt lại đã xóa những gì thuật toán học về bạn. Nó không xóa ưu đãi của nền tảng, vì vậy nội dung so sánh lại xuất hiện ngay lập tức.",
+  noResetNote:"Không quan tâm hoạt động từng bài một. Đặt lại nhanh hơn, nhưng không thể xóa ưu đãi nền tảng dành cho một số nội dung.",
+  catherine:"Đây là một lý do nội dung độc hại có thể quay lại sau khi ai đó hủy theo dõi và chặn, như Catherine mô tả trong phân đoạn Utah Insight. Người dùng có thể điều hướng, nhưng thiết kế nền tảng vẫn kéo lại.",
+  discussT:"Thảo luận",
+  discuss:["Hành động nào của bạn được thuật toán tính là quan tâm? Điều gì khiến bạn bất ngờ?","Bốn loại được ưu tiên trước khi bạn làm gì. Tại sao nền tảng lại thiết kế như vậy?","Ở Vòng 2, cách nào hiệu quả? Nội dung có quay lại sau khi bạn cố xóa không?","Trong Utah Insight, Catherine đã hủy theo dõi và chặn tài khoản nhưng vẫn nhận video độc hại. Trò chơi này giải thích điều đó thế nào?","Thiết kế một 'dây an toàn': tính năng nền tảng có thể thêm vào để bảo vệ thanh thiếu niên mà không cần cấm ứng dụng."]
+}};
+
+let L="en";
+try{const saved=localStorage.getItem("feed-lang");if(saved==="en"||saved==="zh"||saved==="vi")L=saved;else if((navigator.language||"").toLowerCase().startsWith("zh"))L="zh";else if((navigator.language||"").toLowerCase().startsWith("vi"))L="vi"}catch(e){if((navigator.language||"").toLowerCase().startsWith("zh"))L="zh";else if((navigator.language||"").toLowerCase().startsWith("vi"))L="vi"}
+const t=k=>T[L][k];
+const catLabel=k=>CATS[k][L][0],catShort=k=>CATS[k][L][1];
+const pTitle=p=>L==="zh"?p[4]:L==="vi"?p[6]:p[2],pCap=p=>L==="zh"?p[5]:L==="vi"?p[7]:p[3];
+
+const $=s=>document.querySelector(s);
+const screenEl=$("#screen"),nb=$("#notebook"),stageEl=$("#stage"),phoneContainerEl=$("#phone-container");
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pct=v=>Math.round(v*100)+"%";
+let S,hiddenAt=null,toastTimer=null,curPhone=null,curNb=null;
+
+function fresh(){
+  S={
+    round:0,
+    n:0,
+    w:Object.fromEntries(KEYS.map(k=>[k,0])),
+    hist:[],
+    cur:null,
+    resetUsed:false,
+    globalSeen: new Set()
+  };
+}
+
+function draw(cat){
+  if(!POSTS[cat] || !Array.isArray(POSTS[cat])){
+    return ["system", 0, "Default Title", "Default Description", "預設標題", "預設內容", "Tiêu đề", "Mô tả", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"];
+  }
+  let availableIndices = POSTS[cat].map((_, i) => i).filter(i => !S.globalSeen.has(POSTS[cat][i][2]));
+  if (availableIndices.length === 0) {
+    POSTS[cat].forEach(p => S.globalSeen.delete(p[2]));
+    availableIndices = POSTS[cat].map((_, i) => i);
+  }
+  const randomIndex = Math.floor(Math.random() * availableIndices.length);
+  const chosenIndex = availableIndices[randomIndex];
+  const selectedPost = POSTS[cat][chosenIndex];
+  S.globalSeen.add(selectedPost[2]);
+  return selectedPost;
+}
+
+function odds(){const testing=S.round===1&&S.n<5;const raw=KEYS.map(k=>testing?1:Math.exp(.55*S.w[k]+BOOST[k]));const sum=raw.reduce((a,b)=>a+b,0);return Object.fromEntries(KEYS.map((k,i)=>[k,raw[i]/sum]))}
+function pick(){const o=odds();let r=Math.random();for(const k of KEYS){r-=o[k];if(r<=0)return k}return KEYS[KEYS.length-1]}
+const roundHist=r=>S.hist.filter(h=>h.round===r);
+document.addEventListener("visibilitychange",()=>{if(!S||!S.cur)return;if(document.hidden)hiddenAt=performance.now();else if(hiddenAt){S.cur.hidden+=performance.now()-hiddenAt;hiddenAt=null}});
+
+const ICON={
+  like:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20s-7-4.4-9.2-8.6C1.2 8.2 3.2 4.5 6.8 4.5c2 0 3.4 1.1 4.2 2.4.8-1.3 2.2-2.4 4.2-2.4 3.6 0 5.6 3.7 4 6.9C19 15.6 12 20 12 20z"/></svg>',
+  replay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+  ni:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg>'
+};
+
+function showScreenOnly() {
+  stageEl.style.gridTemplateColumns = "minmax(300px, 400px)";
+  stageEl.style.justifyContent = "center";
+  phoneContainerEl.style.display = "block";
+  nb.style.display = "none";
+}
+
+function showSplitStage() {
+  stageEl.style.gridTemplateColumns = "minmax(300px,380px) minmax(0,1fr)";
+  stageEl.style.justifyContent = "stretch";
+  phoneContainerEl.style.display = "block";
+  nb.style.display = "grid";
+}
+
+function showNotebookOnly() {
+  stageEl.style.gridTemplateColumns = "minmax(0,1fr)";
+  phoneContainerEl.style.display = "none";
+  nb.style.display = "grid";
+}
+
+function show(phone,book){
+  if(phone){curPhone=phone;phone()}
+  if(book){curNb=book;book()}
+}
+
+function renderIntro(){
+  showScreenOnly();
+  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("r1")}</span></div>
+  <div class="ph-msg"><h2>${t("introH")}</h2><p>${t("introP")}</p><ul>${t("introL")}</ul><p>${t("introP2")}</p>
+  <div class="ph-btns"><button class="btn" id="go">${t("start")}</button><span class="kbd">${t("keys")}</span></div></div>`;
+  $("#go").onclick=startR1;
+}
+
+function nextPost(){const cat=pick();S.cur={cat,post:draw(cat),start:performance.now(),hidden:0,liked:false,replays:0}}
+
+function renderPost(){
+  showScreenOnly();
+  if(!S || !S.cur) return;
+  const c=S.cur,p=c.post,col=CATS[c.cat].color,total=S.round===1?30:20,r2=S.round===2;
+  const imgUrl = p[8] || p[6];
+  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("postN")(S.n+1,total)}</span>${r2?`<button id="reset" ${S.resetUsed?"disabled":""}>${t("reset")}</button>`:""}</div>
+  <article class="post"><div class="post-head"><span class="avatar" style="background:${col}"></span><b>@${p[0]}</b><span class="sugg">${t("sugg")}</span></div>
+  <div class="art" id="art-img" style="--c:${col}; cursor:pointer; user-select:none; touch-action:manipulation;">
+    <img src="${imgUrl}" alt="Post Image" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1;z-index:1;" />
+    <div class="prog run" id="prog" style="position:relative;z-index:2;"><i></i></div>
+    <span class="art-title" style="position:relative;z-index:2;">${pTitle(p)}</span>
+  </div>
+  <div class="actions"><button class="act" id="like" aria-pressed="${c.liked}">${ICON.like}${t("like")}</button><button class="act" id="replay">${ICON.replay}${t("replay")}</button>${r2?`<button class="act ni" id="ni">${ICON.ni}${t("ni")}</button>`:""}</div>
+  <p class="likes" id="likes">${t("likes")(p[1]+(c.liked?1:0))}</p><p class="cap"><b>${p[0]}</b> ${pCap(p)}</p></article>
+  <button class="next" id="next">${t("next")}</button>`;
+  
+  $("#like").onclick = doLike;
+  $("#replay").onclick = doReplay;
+  $("#next").onclick = () => advance(false);
+  
+  let lastTapTime = 0;
+  const artElement = $("#art-img");
+  artElement.onpointerup = (e) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime;
+    if (tapLength < 350 && tapLength > 0) {
+      e.preventDefault();
+      if (S.cur && !S.cur.liked) doLike();
+    }
+    lastTapTime = currentTime;
+  };
+
+  if(r2){
+    $("#ni").onclick = () => advance(true);
+    $("#reset").onclick = doReset;
+  }
+}
+
+function doLike(){if(!S || !S.cur) return; const c=S.cur;c.liked=!c.liked;const lBtn=$("#like"), lks=$("#likes");if(lBtn)lBtn.setAttribute("aria-pressed",c.liked);if(lks)lks.textContent=t("likes")(c.post[1]+(c.liked?1:0));curNb()}
+function doReplay(){if(!S || !S.cur) return; S.cur.replays++;const p=$("#prog");if(p){p.classList.remove("run");void p.offsetWidth;p.classList.add("run");}curNb()}
+function doReset(){S.resetUsed=true;KEYS.forEach(k=>S.w[k]=0);const rBtn=$("#reset");if(rBtn)rBtn.disabled=true;toast(t("toastReset"));curNb()}
+function toast(msg){let el=screenEl.querySelector(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");screenEl.appendChild(el)}el.textContent=msg;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.remove(),3200)}
+
+function advance(ni){
+  if(!S || !S.cur) return;
+  const c=S.cur;const dwell=Math.min(12,Math.max(0,(performance.now()-c.start-c.hidden)/1000));
+  let d;if(ni)d=-4;else{d=dwell<1?-.4:Math.min(dwell-1,8)*.45;if(c.liked)d+=1.6;d+=Math.min(c.replays,3)*1.2}
+  S.w[c.cat]=clamp(S.w[c.cat]+d,-6,12);
+  S.hist.push({round:S.round,cat:c.cat,post:c.post,dwell,liked:c.liked,replays:c.replays,delta:d,ni});
+  S.n++;S.cur=null;
+  if(S.round===1&&S.n>=30)return endR1();
+  if(S.round===2&&S.n>=20)return endR2();
+  nextPost();renderPost();curNb();
+}
+
+function startR1(){fresh();S.round=1;nextPost();show(renderPost,renderLocked)}
+
+function renderR1End(){
+  showNotebookOnly();
+  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("r1done")}</span></div>
+  <div class="ph-msg"><h2>${t("r1doneH")}</h2><p>${t("r1doneP")}</p>
+  <div class="ph-btns"><button class="btn" id="r2">${t("toR2")}</button><button class="btn ghost" id="again">${t("againR1")}</button></div></div>`;
+  $("#r2").onclick=()=>show(renderR2Intro);$("#again").onclick=startR1;
+}
+
+function endR1(){show(renderR1End,renderReveal);if(window.matchMedia("(max-width:860px)").matches)nb.scrollIntoView({behavior:"smooth",block:"start"})}
+
+function renderR2Intro(){
+  showScreenOnly();
+  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("r2")}</span></div>
+  <div class="ph-msg"><h2>${t("r2H")}</h2><p>${t("r2P")}</p><ul>${t("r2L")}</ul><p>${t("r2P2")}</p>
+  <div class="ph-btns"><button class="btn" id="stuck">${t("stuck")}</button><button class="btn ghost" id="mine">${t("mine")}</button></div></div>`;
+  $("#stuck").onclick=()=>startR2(true);$("#mine").onclick=()=>startR2(false);
+}
+
+function startR2(stuck){
+  if(!roundHist(1).length&&!stuck){stuck=true}
+  S.hist=roundHist(1);S.round=2;S.n=0;S.resetUsed=false;
+  if(stuck)S.w={...STUCK};
+  nextPost();show(renderPost,renderEscapeLive);
+}
+
+function renderR2End(){
+  showNotebookOnly();
+  const g = goalState();
+  screenEl.innerHTML=`<div class="feedbar"><span class="app">feed</span><span>${t("r2done")}</span></div>
+  <div class="ph-msg"><h2>${g.win?t("winH"):t("loseH")}</h2><p>${g.win?t("winP"):t("loseP")}</p>
+  <div class="ph-btns"><button class="btn" id="retry">${t("retry")}</button><button class="btn ghost" id="restart">${t("restart")}</button></div></div>`;
+  $("#retry").onclick=()=>show(renderR2Intro);$("#restart").onclick=resetAll;
+}
+
+function endR2(){show(renderR2End,renderEscapeResult)}
+function resetAll(){fresh();show(renderIntro,renderLocked)}
+
+function renderLocked(){ nb.style.display = "none"; }
+
+const esc=s=>s.replace(/"/g,"&quot;");
+const stripHTML=(list,cls)=>`<div class="strip ${cls||""}">${list.map(h=>`<span class="${h.ni?"ni":""}" style="background:${CATS[h.cat].color}" title="${esc(catShort(h.cat)+": "+pTitle(h.post))}"></span>`).join("")}</div>`;
+const barsHTML=o=>`<div class="bars">${KEYS.slice().sort((a,b)=>o[b]-o[a]).map(k=>`<div class="bar"><span>${catShort(k)}</span><span class="track"><i style="width:${o[k]*100}%;background:${CATS[k].color}"></i></span><span class="pct">${pct(o[k])}</span></div>`).join("")}</div>`;
+const legendHTML=()=>`<div class="legend"><span><i style="background:${CATS.look.color}"></i><i style="background:${CATS.body.color}"></i>${t("warm")}</span><span><i style="background:${CATS.friends.color}"></i><i style="background:${CATS.hobby.color}"></i>${t("cool")}</span></div>`;
+const discussHTML=()=>`<section class="discuss"><p class="sub">${t("discussT")}</p><ol>${t("discuss").map(q=>`<li>${q}</li>`).join("")}</ol></section>`;
+const types=l=>new Set(l.map(h=>h.cat)).size, comps=l=>l.filter(h=>CATS[h.cat].comp).length;
+
+function renderReveal(){
+  showNotebookOnly();
+  const h=roundHist(1),o=odds(),top=KEYS.slice().sort((a,b)=>o[b]-o[a])[0];
+  const first=h.slice(0,10),last=h.slice(-10);
+  const strong=h.map((x,i)=>({...x,i:i+1})).filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta).slice(0,5);
+  const total=h.reduce((a,x)=>a+x.dwell,0),likes=h.filter(x=>x.liked).length,reps=h.reduce((a,x)=>a+x.replays,0),skips=h.filter(x=>x.dwell<1).length;
+  const line=x=>[`#${x.i} ${pTitle(x.post)}`,t("paused")(x.dwell.toFixed(1)),x.liked?t("liked"):"",x.replays?t("replayed")(x.replays):""].filter(Boolean).join(" · ");
+  nb.innerHTML=`<div class="nb-head"><h2>${t("revealTitle")}</h2><span class="tag">${t("unlocked")}</span></div>
+  <p class="verdict">${t("verdict")(catLabel(top),CATS[top].color,pct(o[top]))}</p>
+  <div><p class="sub">${t("your30")}</p>${stripHTML(h)}<div class="strip-labels"><span>${t("post1")}</span><span>${t("testing")}</span><span>30</span></div>
+  <div class="compare"><div><small>${t("first10")}</small><b>${t("typesN")(types(first))}</b><small>${t("compN")(comps(first))}</small></div><div><small>${t("last10")}</small><b>${t("typesN")(types(last))}</b><small>${t("compN")(comps(last))}</small></div></div></div>
+  <div><p class="sub">${t("odds")}</p>${barsHTML(o)}</div>
+  <div><p class="sub">${t("strongest")}</p>${strong.length?`<ul class="log">${strong.map(x=>`<li><span>${line(x)}</span><span style="color:${CATS[x.cat].color}">+${x.delta.toFixed(1)} ${catShort(x.cat)}</span></li>`).join("")}</ul>`:`<p>${t("none")}</p>`}</div>
+  <div><p class="sub">${t("receipt")}</p><ul class="log"><li><span>${t("timeW")}</span><span>${t("sec")(total.toFixed(0))}</span></li><li><span>${t("likesW")}</span><span>${likes}</span></li><li><span>${t("replaysW")}</span><span>${reps}</span></li><li><span>${t("skips")}</span><span>${skips}</span></li><li><span>${t("typed")}</span><span>0</span></li></ul></div>
+  <div class="note"><p>${t("note1")}</p><p>${t("note2")}</p></div>
+  ${legendHTML()}
+  <div class="nb-btns"><button class="nb-btn" id="nbR2">${t("toR2")}</button><button class="nb-btn ghost" id="nbAgain">${t("againR1")}</button></div>
+  ${discussHTML()}`;
+  $("#nbR2").onclick=()=>show(renderR2Intro);$("#nbAgain").onclick=startR1;
+}
+
+function goalState(){const l=roundHist(2).slice(-10);const ty=types(l),c=comps(l);return {ty,c,win:l.length>=10&&ty>=5&&c<=3}}
+function goalHTML(g){return `<div class="goal"><div><small>${t("typesL10")}</small><br><b class="${g.ty>=5?"ok":"no"}">${g.ty}</b> <small>${t("need5")}</small></div><div><small>${t("compL10")}</small><br><b class="${g.c<=3?"ok":"no"}">${g.c}</b> <small>${t("max3")}</small></div></div>`}
+
+function renderEscapeLive(){
+  showSplitStage();
+  const h=roundHist(2);
+  nb.innerHTML=`<div class="nb-head"><h2>${t("liveTitle")}</h2><span class="tag">${t("live")}</span></div>
+  <p>${t("liveP")}</p>${goalHTML(goalState())}
+  <div><p class="sub">${t("soFar")}</p>${h.length?stripHTML(h,"r2"):`<p style="color:var(--muted)">${t("nothing")}</p>`}</div>
+  <div><p class="sub">${t("odds")}</p>${barsHTML(odds())}</div>${legendHTML()}`;
+}
+
+function renderEscapeResult(){
+  showNotebookOnly();
+  const g=goalState(),h=roundHist(2),o=odds();
+  const niN=h.filter(x=>x.ni).length,pc=h.filter(x=>!x.ni&&CATS[x.cat].comp&&x.dwell>=1).length;
+  const co=KEYS.filter(k=>CATS[k].comp).reduce((a,k)=>a+o[k],0);
+  nb.innerHTML=`<div class="nb-head"><h2>${g.win?t("winT"):t("loseT")}</h2><span class="tag">${t("result")}</span></div>
+  ${goalHTML(g)}
+  <div><p class="sub">${t("your20")}</p>${stripHTML(h,"r2")}</div>
+  <div><p class="sub">${t("did")}</p><ul class="log"><li><span>${t("niCount")}</span><span>${niN}</span></li><li><span>${t("pausedComp")}</span><span>${pc}</span></li><li><span>${t("usedReset")}</span><span>${S.resetUsed?t("yes"):t("no")}</span></li><li><span>${t("compOdds")}</span><span>${pct(co)}</span></li></ul></div>
+  <div class="note">${pc?`<p>${t("pausedNote")(pc)}</p>`:""}<p>${S.resetUsed?t("resetNote"):t("noResetNote")}</p><p>${t("catherine")}</p></div>
+  ${legendHTML()}
+  <div class="nb-btns"><button class="nb-btn" id="nbRetry">${t("retry")}</button><button class="nb-btn ghost" id="nbStart">${t("startOver")}</button></div>
+  ${discussHTML()}`;
+  $("#nbRetry").onclick=()=>show(renderR2Intro);$("#nbStart").onclick=resetAll;
+}
+
+function applyStatic(){
+  document.documentElement.lang=L==="zh"?"zh-Hant":L==="vi"?"vi":"en";
+  ["eyebrow","h1","lede","foot"].forEach(id=>$("#"+id).textContent=t(id));
+  $("#lang-en").setAttribute("aria-pressed",L==="en");
+  $("#lang-zh").setAttribute("aria-pressed",L==="zh");
+  $("#lang-vi").setAttribute("aria-pressed",L==="vi");
+}
+function setLang(l){
+  if(l===L)return;L=l;try{localStorage.setItem("feed-lang",l)}catch(e){}
+  applyStatic();if(curPhone)curPhone();if(curNb)curNb();
+}
+$("#lang-en").onclick=()=>setLang("en");
+$("#lang-zh.onclick")||($("#lang-zh").onclick=()=>setLang("zh"));
+$("#lang-vi").onclick=()=>setLang("vi");
+
+document.addEventListener("keydown",e=>{
+  if(!S||!S.cur||e.target.closest("input,textarea,.lang"))return;
+  const k=e.key.toLowerCase();
+  if(k==="arrowdown"||k===" "){e.preventDefault();advance(false)}
+  else if(k==="l")doLike();else if(k==="r")doReplay();else if(k==="n"&&S.round===2)advance(true);
+});
+applyStatic();resetAll();
+</script>
 </body>
 </html>
